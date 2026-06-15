@@ -1,0 +1,13 @@
+# Composer dependencies
+/vendor/
+plugins/*/vendor/
+
+# Build artifacts
+/build/
+/dist/
+
+# Tooling caches
+/.phpunit.cache/
+
+# OS / editor
+.DS_Store
