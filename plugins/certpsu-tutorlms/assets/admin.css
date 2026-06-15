@@ -1,0 +1,42 @@
+.certpsu-section {
+	margin: 0 0 1em;
+	padding: 0 0 0.5em;
+	border-bottom: 1px solid #e2e4e7;
+}
+
+.certpsu-section:last-child {
+	border-bottom: 0;
+}
+
+.certpsu-section-title {
+	margin: 0.6em 0 0;
+	font-size: 13px;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: #50575e;
+}
+
+.certpsu-class-id code {
+	font-size: 12px;
+}
+
+.certpsu-endorser-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	align-items: center;
+	margin-bottom: 6px;
+	padding: 6px;
+	background: #f6f7f7;
+	border: 1px solid #e2e4e7;
+	border-radius: 3px;
+}
+
+.certpsu-endorser-row input[type="text"] {
+	width: 140px;
+}
+
+.certpsu-remove-endorser {
+	color: #b32d2e;
+	cursor: pointer;
+}

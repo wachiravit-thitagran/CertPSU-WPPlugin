@@ -1,0 +1,75 @@
+name: Build & Release
+
+# Build the plugin zips and publish a GitHub Release automatically on every push
+# to the default branch. The release version is taken from the core plugin's
+# `Version:` header:
+#
+#   - bump the Version header, push -> a new release `v<version>` is created
+#     with the zips attached.
+#   - push again without bumping -> the existing release's assets are refreshed.
+#
+# You can also run it manually from the Actions tab (workflow_dispatch).
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write  # required to create the Release and upload assets
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP & Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Install runtime dependencies (Action Scheduler)
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress
+
+      - name: Build plugin zips
+        run: bin/build.sh
+
+      - name: Determine release version
+        id: version
+        run: |
+          version="$(grep -iE '^\s*\*?\s*Version:' plugins/certpsu-connector/certpsu-connector.php \
+            | head -n1 \
+            | sed -E 's/.*[Vv]ersion:[[:space:]]*([0-9A-Za-z._-]+).*/\1/')"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Release version: v${version}"
+
+      - name: List artifacts
+        run: ls -lh dist/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-zips
+          path: dist/*.zip
+          if-no-files-found: error
+
+      - name: Publish to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG exists — refreshing assets."
+            gh release upload "$TAG" dist/*.zip --clobber
+          else
+            echo "Creating release $TAG at ${GITHUB_SHA}."
+            gh release create "$TAG" dist/*.zip \
+              --target "${GITHUB_SHA}" \
+              --title "$TAG" \
+              --generate-notes
+          fi
