@@ -134,7 +134,12 @@ class Issuances_List_Table extends \WP_List_Table {
 		if ( '' !== $class_id ) {
 			$config_json = (string) ( $item['certpsu_config_json'] ?? '{}' );
 			$config      = json_decode( $config_json, true );
+			
+			// Use saved organization_id from config, or fallback to the global setting.
 			$org_id      = is_array( $config ) && isset( $config['organization_id'] ) ? $config['organization_id'] : '';
+			if ( '' === $org_id ) {
+				$org_id = certpsu()->container()->get( 'settings' )->organization_id();
+			}
 			
 			$view_url = sprintf( 'https://cert.psu.ac.th/th/admin/classes/%s', urlencode( $class_id ) );
 			if ( '' !== $org_id ) {
