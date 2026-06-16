@@ -26,11 +26,33 @@ final class Class_Payload_Builder {
 		$title = (string) get_the_title( $course_id );
 		$today = gmdate( 'Y-m-d' );
 
+		$timestamp = current_time( 'timestamp' );
+		
+		$thai_months = array(
+			1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
+			5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม',
+			9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม',
+		);
+		$thai_months_short = array(
+			1 => 'ม.ค.', 2 => 'ก.พ.', 3 => 'มี.ค.', 4 => 'เม.ย.',
+			5 => 'พ.ค.', 6 => 'มิ.ย.', 7 => 'ก.ค.', 8 => 'ส.ค.',
+			9 => 'ก.ย.', 10 => 'ต.ค.', 11 => 'พ.ย.', 12 => 'ธ.ค.',
+		);
+
+		$month_num = (int) gmdate( 'n', $timestamp );
+
 		// 1) Establish base context without class_name first, so class_name can use course_title.
 		$context = array(
-			'course_title' => $title,
-			'course_id'    => $course_id,
-			'current_date' => $today,
+			'course_title'                    => $title,
+			'course_id'                       => $course_id,
+			'current_date'                    => $today,
+			'completed_course_day'            => gmdate( 'j', $timestamp ),
+			'completed_course_month'          => gmdate( 'F', $timestamp ),
+			'completed_course_month_short'    => gmdate( 'M', $timestamp ),
+			'completed_course_month_th'       => $thai_months[ $month_num ],
+			'completed_course_month_th_short' => $thai_months_short[ $month_num ],
+			'completed_course_year'           => gmdate( 'Y', $timestamp ),
+			'completed_course_year_bd'        => (string) ( (int) gmdate( 'Y', $timestamp ) + 543 ),
 		);
 
 		// Evaluate name and printed_name with base context.
