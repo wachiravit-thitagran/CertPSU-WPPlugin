@@ -46,6 +46,18 @@ final class Settings_Page {
 		echo '<p class="description">' . esc_html__( 'Sent as the X-API-Key header to cert.psu.ac.th. The organization is derived from this key.', 'certpsu-connector' ) . '</p>';
 		echo '</td></tr>';
 
+		// Organization ID.
+		echo '<tr>';
+		echo '<th scope="row"><label for="certpsu_organization_id">' . esc_html__( 'Organization ID', 'certpsu-connector' ) . '</label></th>';
+		echo '<td>';
+		printf(
+			'<input type="text" id="certpsu_organization_id" name="organization_id" value="%s" class="regular-text" placeholder="%s" />',
+			esc_attr( (string) $settings['organization_id'] ),
+			esc_attr__( 'Optional: Organization ID for dashboard links', 'certpsu-connector' )
+		);
+		echo '<p class="description">' . esc_html__( 'Currently used only to build the "View on CertPSU" links in the admin interface.', 'certpsu-connector' ) . '</p>';
+		echo '</td></tr>';
+
 		// API log retention.
 		echo '<tr>';
 		echo '<th scope="row"><label for="certpsu_api_log_retention_days">' . esc_html__( 'API log retention (days)', 'certpsu-connector' ) . '</label></th>';
@@ -85,6 +97,10 @@ final class Settings_Page {
 
 		if ( isset( $_POST['api_key'] ) ) {
 			$values['api_key'] = sanitize_text_field( trim( (string) wp_unslash( $_POST['api_key'] ) ) );
+		}
+
+		if ( isset( $_POST['organization_id'] ) ) {
+			$values['organization_id'] = sanitize_text_field( trim( (string) wp_unslash( $_POST['organization_id'] ) ) );
 		}
 
 		$service->update( $values );
