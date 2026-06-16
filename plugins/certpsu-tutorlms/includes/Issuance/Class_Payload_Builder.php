@@ -23,10 +23,10 @@ final class Class_Payload_Builder {
 	 * @return array<string,mixed>
 	 */
 	public function build( int $course_id, array $settings ): array {
-		$title = (string) get_the_title( $course_id );
-		$today = gmdate( 'Y-m-d' );
-
-		$timestamp = current_time( 'timestamp' );
+		$title       = (string) get_the_title( $course_id );
+		$course_post = get_post( $course_id );
+		$timestamp   = $course_post ? strtotime( $course_post->post_date ) : current_time( 'timestamp' );
+		$today       = gmdate( 'Y-m-d', $timestamp );
 		
 		$thai_months = array(
 			1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',

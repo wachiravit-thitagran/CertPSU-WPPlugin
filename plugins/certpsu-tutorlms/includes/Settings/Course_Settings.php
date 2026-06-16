@@ -130,17 +130,17 @@ final class Course_Settings {
 					'started_date'                => array(
 						'label' => 'Started date',
 						'type'  => 'date',
-						'help'  => 'Leave blank to use the completion date.',
+						'help'  => 'Leave blank to use the course creation date.',
 					),
 					'ended_date'                  => array(
 						'label' => 'Ended date',
 						'type'  => 'date',
-						'help'  => 'Leave blank to use the completion date.',
+						'help'  => 'Leave blank to use the course creation date.',
 					),
 					'issued_date'                 => array(
 						'label' => 'Issued date',
 						'type'  => 'date',
-						'help'  => 'Leave blank to use the completion date.',
+						'help'  => 'Leave blank to use the course creation date.',
 					),
 					'class_date_text'             => array(
 						'label' => 'Class date text',
