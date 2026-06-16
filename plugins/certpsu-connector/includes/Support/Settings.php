@@ -28,9 +28,8 @@ final class Settings {
 		return wp_parse_args(
 			get_option( self::OPTION_KEY, array() ),
 			array(
-				'api_key'                  => '',
-				'delete_data_on_uninstall' => false,
-				'api_log_retention_days'   => 0,
+				'api_key'                => '',
+				'api_log_retention_days' => 0,
 			)
 		);
 	}
@@ -43,5 +42,15 @@ final class Settings {
 	public function api_key(): string {
 		$all = $this->all();
 		return isset( $all['api_key'] ) ? (string) $all['api_key'] : '';
+	}
+
+	/**
+	 * Persist a partial set of settings, merged over the current values.
+	 *
+	 * @param array<string,mixed> $values Values to update.
+	 * @return void
+	 */
+	public function update( array $values ): void {
+		update_option( self::OPTION_KEY, array_merge( $this->all(), $values ) );
 	}
 }
