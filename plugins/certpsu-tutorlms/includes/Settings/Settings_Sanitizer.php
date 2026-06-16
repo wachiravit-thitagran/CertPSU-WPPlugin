@@ -116,6 +116,7 @@ final class Settings_Sanitizer {
 
 		$allowed_requirement = array( 'required', 'not_required' );
 		$allowed_auto_send   = array( 'auto', 'not_auto' );
+		$allowed_ids         = array_keys( Course_Settings::endorser_positions() );
 
 		$endorsers = array();
 		foreach ( $value as $row ) {
@@ -128,6 +129,11 @@ final class Settings_Sanitizer {
 
 			// A usable endorser needs at least these three.
 			if ( '' === $endorser_id || '' === $user || '' === $name ) {
+				continue;
+			}
+
+			// endorser_id must be one of the CertPSU position slots.
+			if ( ! in_array( $endorser_id, $allowed_ids, true ) ) {
 				continue;
 			}
 
