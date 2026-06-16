@@ -75,11 +75,6 @@ final class Course_Settings {
 			'connection'  => array(
 				'title'  => 'CertPSU connection',
 				'fields' => array(
-					'organization_id'                              => array(
-						'label' => 'Organization ID',
-						'type'  => 'text',
-						'help'  => 'Optional under API v2 (the organization is taken from the API key).',
-					),
 					'certificate_email_template'                   => array(
 						'label' => 'Certificate email template',
 						'type'  => 'text',
