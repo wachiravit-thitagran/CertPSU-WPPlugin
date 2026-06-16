@@ -34,6 +34,7 @@ final class Bootstrap {
 		( new \CertPSU\Connector\Queue\Action_Scheduler_Loader() )->load();
 
 		$container = new Container();
+		$container->set( 'template_replacer', new \CertPSU\Connector\Utils\Template_Replacer() );
 		$container->set( 'settings', new \CertPSU\Connector\Support\Settings() );
 		$container->set( 'queue', new \CertPSU\Connector\Queue\Queue() );
 		$container->set( 'issuance_repository', new \CertPSU\Connector\Database\Repositories\Issuance_Repository() );
