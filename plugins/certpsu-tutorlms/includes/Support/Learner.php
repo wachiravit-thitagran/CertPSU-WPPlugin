@@ -33,10 +33,15 @@ final class Learner {
 			return null;
 		}
 
+		// common_id must be non-empty: CertPSU v2 rejects a null common_id, and it
+		// is used for duplicate detection. Fall back to the email (the same
+		// default the server applies internally).
+		$common_id = $this->resolve_common_id( $user_id, (string) ( $settings['common_id_meta_key'] ?? '' ) );
+
 		return array(
 			'name'         => $this->resolve_name( $user, (string) ( $settings['name_source'] ?? 'display_name' ) ),
 			'email'        => $email,
-			'common_id'    => $this->resolve_common_id( $user_id, (string) ( $settings['common_id_meta_key'] ?? '' ) ),
+			'common_id'    => ( null !== $common_id && '' !== $common_id ) ? $common_id : $email,
 			'organization' => null,
 			'group'        => (string) ( $settings['template_group'] ?? 'participant' ),
 			'extra'        => array(
@@ -44,17 +49,6 @@ final class Learner {
 				'tutorlms_user_id'   => $user_id,
 			),
 		);
-	}
-
-	/**
-	 * The reference used to release a single participant (id / common_id / email).
-	 * Email is always present and unique, so it is the default reference.
-	 *
-	 * @param array<string,mixed> $participant Participant payload.
-	 * @return string
-	 */
-	public function reference( array $participant ): string {
-		return (string) ( $participant['email'] ?? '' );
 	}
 
 	/**

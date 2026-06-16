@@ -12,7 +12,8 @@ course. Requires the **CertPSU Connector** plugin (active) for the API client.
   1. ensures the course's class exists (`POST /v2/classes`),
   2. adds the learner as a participant (`POST /v2/classes/{class_id}/participants`),
   3. releases that learner's certificate on-the-fly
-     (`POST /v2/classes/{class_id}/release/{ref}`, `ref` = learner email).
+     (`POST /v2/classes/{class_id}/participants/{participant_id}/release`, using
+     the server-assigned participant id returned by step 2).
 - Work runs in the background via Action Scheduler (provided by the connector),
   with retries on transient failures and idempotency per learner + course.
 
@@ -59,7 +60,7 @@ Configurable fields:
 ```php
 do_action( 'certpsu_tutorlms_class_created', $course_id, $class_id );
 do_action( 'certpsu_tutorlms_participant_added', $course_id, $user_id, $class_id );
-do_action( 'certpsu_tutorlms_certificate_released', $course_id, $user_id, $class_id, $ref );
+do_action( 'certpsu_tutorlms_certificate_released', $course_id, $user_id, $class_id, $participant_id );
 ```
 
 ## Requirements
