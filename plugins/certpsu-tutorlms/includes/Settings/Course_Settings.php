@@ -76,16 +76,22 @@ final class Course_Settings {
 				'title'  => 'CertPSU connection',
 				'fields' => array(
 					'certificate_email_template'                   => array(
-						'label' => 'Certificate email template',
-						'type'  => 'text',
+						'label'          => 'Certificate email template',
+						'type'           => 'text',
+						'options_source' => 'email_template:participant',
+						'help'           => 'Select from the organization email templates. Falls back to manual id entry when the API is unavailable.',
 					),
 					'endorser_required_endorsement_email_template' => array(
-						'label' => 'Endorser (required) email template',
-						'type'  => 'text',
+						'label'          => 'Endorser (required) email template',
+						'type'           => 'text',
+						'options_source' => 'email_template:endorser_required_endorsement',
+						'help'           => 'Select from the organization email templates. Falls back to manual id entry when the API is unavailable.',
 					),
 					'endorser_without_endorsement_email_template'  => array(
-						'label' => 'Endorser (without endorsement) email template',
-						'type'  => 'text',
+						'label'          => 'Endorser (without endorsement) email template',
+						'type'           => 'text',
+						'options_source' => 'email_template:endorser_without_endorsement',
+						'help'           => 'Select from the organization email templates. Falls back to manual id entry when the API is unavailable.',
 					),
 				),
 			),
@@ -174,9 +180,10 @@ final class Course_Settings {
 				'title'  => 'Certificate template',
 				'fields' => array(
 					'template_id'       => array(
-						'label' => 'Template ID',
-						'type'  => 'text',
-						'help'  => 'CertPSU certificate template id for this course.',
+						'label'          => 'Template',
+						'type'           => 'text',
+						'options_source' => 'certificate_template',
+						'help'           => 'Select a certificate template from the organization. Falls back to manual id entry when the API is unavailable.',
 					),
 					'template_name'     => array(
 						'label' => 'Template name',

@@ -104,6 +104,36 @@ final class CertPSU_Api_Client {
 	}
 
 	/**
+	 * List certificate templates available to the organization (derived from the API key).
+	 *
+	 * @param array<string,mixed> $query Optional query (page, size, status, sort).
+	 * @return Api_Response
+	 */
+	public function list_certificate_templates( array $query = array() ): Api_Response {
+		return $this->request( 'GET', '/v2/certificate-templates', $query, null );
+	}
+
+	/**
+	 * List email templates of the organization (derived from the API key).
+	 *
+	 * @param array<string,mixed> $query Optional query (page, size, type, is_default, sort).
+	 * @return Api_Response
+	 */
+	public function list_email_templates( array $query = array() ): Api_Response {
+		return $this->request( 'GET', '/v2/email-templates', $query, null );
+	}
+
+	/**
+	 * List endorsers of the organization (derived from the API key).
+	 *
+	 * @param array<string,mixed> $query Optional query (page, size, status, sort).
+	 * @return Api_Response
+	 */
+	public function list_endorsers( array $query = array() ): Api_Response {
+		return $this->request( 'GET', '/v2/endorsers', $query, null );
+	}
+
+	/**
 	 * Request.
 	 *
 	 * @param string                   $method HTTP Method.

@@ -16,15 +16,27 @@
 		}
 
 		var add = Tutor.CourseBuilder.Additional.registerField.bind( Tutor.CourseBuilder.Additional );
-		var groups = ( window.CertPSUCourseBuilder && window.CertPSUCourseBuilder.groups ) || [];
+		var cb = window.CertPSUCourseBuilder || {};
+		var groups = cb.groups || [];
 		var slot = 'after_certificates';
 
 		var priority = 10;
 		function nextPrio() { priority += 10; return priority; }
 
+		// Render a dropdown when the connector supplied options, else a plain text input.
+		function withBlank( opts ) {
+			return [ { value: '', label: '\u2014 Select \u2014' } ].concat( opts || [] );
+		}
+		function selectOrText( field, options ) {
+			if ( options && options.length ) {
+				return { name: field.name, type: 'select', label: field.label, options: withBlank( options ), priority: field.priority };
+			}
+			return { name: field.name, type: 'text', label: field.label, placeholder: field.placeholder, priority: field.priority };
+		}
+
 		add( slot, { name: 'certpsu_enabled', type: 'switch', label: 'CertPSU: issue certificate on completion', priority: nextPrio() } );
 
-		add( slot, { name: 'certpsu_template_id', type: 'text', label: 'CertPSU template ID', placeholder: 'cert template id', priority: nextPrio() } );
+		add( slot, selectOrText( { name: 'certpsu_template_id', label: 'CertPSU template', placeholder: 'cert template id', priority: nextPrio() }, cb.certificateTemplates ) );
 		add( slot, { name: 'certpsu_template_group', type: 'select', label: 'CertPSU certificate group', options: groups, priority: nextPrio() } );
 		add( slot, { name: 'certpsu_template_name', type: 'text', label: 'CertPSU certificate name', placeholder: 'Leave blank to use course title', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_certificate_text', type: 'textarea', label: 'CertPSU certificate text', priority: nextPrio() } );
@@ -32,9 +44,9 @@
 		add( slot, { name: 'certpsu_organization_name', type: 'text', label: 'CertPSU organization name (printed)', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_remark', type: 'text', label: 'CertPSU remark', priority: nextPrio() } );
 
-		add( slot, { name: 'certpsu_certificate_email_template', type: 'text', label: 'CertPSU certificate email template', priority: nextPrio() } );
-		add( slot, { name: 'certpsu_endorser_required_endorsement_email_template', type: 'text', label: 'Endorser (required) email template', priority: nextPrio() } );
-		add( slot, { name: 'certpsu_endorser_without_endorsement_email_template', type: 'text', label: 'Endorser (without endorsement) email template', priority: nextPrio() } );
+		add( slot, selectOrText( { name: 'certpsu_certificate_email_template', label: 'CertPSU certificate email template', placeholder: 'email template id', priority: nextPrio() }, cb.emailParticipant ) );
+		add( slot, selectOrText( { name: 'certpsu_endorser_required_endorsement_email_template', label: 'Endorser (required) email template', placeholder: 'email template id', priority: nextPrio() }, cb.emailRequired ) );
+		add( slot, selectOrText( { name: 'certpsu_endorser_without_endorsement_email_template', label: 'Endorser (without endorsement) email template', placeholder: 'email template id', priority: nextPrio() }, cb.emailWithout ) );
 
 		add( slot, { name: 'certpsu_class_name', type: 'text', label: 'Class name', placeholder: 'Leave blank to use course title', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_printed_name', type: 'text', label: 'Printed name', placeholder: 'Leave blank to use course title', priority: nextPrio() } );
