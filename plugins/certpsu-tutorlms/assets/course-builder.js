@@ -37,11 +37,11 @@
 		add( slot, { name: 'certpsu_enabled', type: 'switch', label: 'CertPSU: issue certificate on completion', priority: nextPrio() } );
 
 		add( slot, selectOrText( { name: 'certpsu_template_id', label: 'CertPSU template', placeholder: 'cert template id', priority: nextPrio() }, cb.certificateTemplates ) );
+		add( slot, { name: 'certpsu_template_name', type: 'text', label: 'CertPSU certificate name', placeholder: 'เกียรติบัตรผู้เข้าร่วม', priority: nextPrio() } );
+		add( slot, { name: 'certpsu_organization_name', type: 'text', label: 'CertPSU organization name (printed)', placeholder: 'สำนักนวัตกรรมดิจิทัลและระบบอัจฉริยะ', priority: nextPrio() } );
+		add( slot, { name: 'certpsu_declaration_text', type: 'text', label: 'CertPSU declaration text', placeholder: 'มอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า', priority: nextPrio() } );
+		add( slot, { name: 'certpsu_certificate_text', type: 'textarea', label: 'CertPSU certificate text', placeholder: 'ได้ปฏิบัติงานอาสาผ่านระดับผู้เชี่ยวชาญถอดลายลักษณ์', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_template_group', type: 'select', label: 'CertPSU certificate group', options: groups, priority: nextPrio() } );
-		add( slot, { name: 'certpsu_template_name', type: 'text', label: 'CertPSU certificate name', placeholder: 'Leave blank to use course title', priority: nextPrio() } );
-		add( slot, { name: 'certpsu_certificate_text', type: 'textarea', label: 'CertPSU certificate text', priority: nextPrio() } );
-		add( slot, { name: 'certpsu_declaration_text', type: 'text', label: 'CertPSU declaration text', priority: nextPrio() } );
-		add( slot, { name: 'certpsu_organization_name', type: 'text', label: 'CertPSU organization name (printed)', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_remark', type: 'text', label: 'CertPSU remark', priority: nextPrio() } );
 
 		add( slot, selectOrText( { name: 'certpsu_certificate_email_template', label: 'CertPSU certificate email template', placeholder: 'email template id', priority: nextPrio() }, cb.emailParticipant ) );
