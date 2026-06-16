@@ -21,6 +21,7 @@ final class Migration_Runner {
 	 */
 	public function migrate(): void {
 		( new Migrations\Migration_001_Create_Core_Tables() )->up();
+		( new Migrations\Migration_002_Add_WP_User_ID() )->up();
 		update_option( 'certpsu_connector_db_version', CERTPSU_CONNECTOR_DB_VERSION );
 	}
 }

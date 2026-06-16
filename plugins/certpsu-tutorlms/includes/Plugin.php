@@ -13,6 +13,7 @@ use CertPSU\TutorLMS\Admin\Assets;
 use CertPSU\TutorLMS\Admin\Course_Metabox;
 use CertPSU\TutorLMS\Admin\Defaults_Page;
 use CertPSU\TutorLMS\Integration\Tutor_Course_Builder;
+use CertPSU\TutorLMS\Integration\My_Certificates_Integration;
 use CertPSU\TutorLMS\Issuance\Completion_Handler;
 
 /**
@@ -35,6 +36,9 @@ final class Plugin {
 		// Tutor LMS React course builder fields (save may run via REST, so this
 		// is registered unconditionally).
 		( new Tutor_Course_Builder() )->register();
+
+		// Frontend user dashboard integration.
+		( new My_Certificates_Integration() )->register();
 
 		// Admin: per-course metabox, global defaults page, assets.
 		if ( is_admin() ) {

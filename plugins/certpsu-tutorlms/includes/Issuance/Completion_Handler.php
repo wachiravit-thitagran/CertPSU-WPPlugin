@@ -132,7 +132,7 @@ final class Completion_Handler {
 
 		// 3) Release this learner's certificate on-the-fly (unless auto-release is off).
 		if ( empty( $settings['auto_release'] ) ) {
-			$this->remember( $user_id, $course_id, $class_id, $participant_id, false );
+			$this->remember( $user_id, $course_id, $class_id, $participant_id, false, '' );
 			return;
 		}
 
@@ -143,7 +143,8 @@ final class Completion_Handler {
 			return;
 		}
 
-		$this->remember( $user_id, $course_id, $class_id, $participant_id, true );
+		$certificate_url = isset( $release->data['certificate_url'] ) ? (string) $release->data['certificate_url'] : '';
+		$this->remember( $user_id, $course_id, $class_id, $participant_id, true, $certificate_url );
 
 		/**
 		 * Fires after a learner's certificate is released.
@@ -194,20 +195,22 @@ final class Completion_Handler {
 	/**
 	 * Persist issuance state for a learner + course.
 	 *
-	 * @param int    $user_id        User ID.
-	 * @param int    $course_id      Course ID.
-	 * @param string $class_id       Class id.
-	 * @param string $participant_id CertPSU participant id.
-	 * @param bool   $released       Whether the certificate was released.
+	 * @param int    $user_id         User ID.
+	 * @param int    $course_id       Course ID.
+	 * @param string $class_id        Class id.
+	 * @param string $participant_id  CertPSU participant id.
+	 * @param bool   $released        Whether the certificate was released.
+	 * @param string $certificate_url Certificate URL.
 	 * @return void
 	 */
-	private function remember( int $user_id, int $course_id, string $class_id, string $participant_id, bool $released ): void {
+	private function remember( int $user_id, int $course_id, string $class_id, string $participant_id, bool $released, string $certificate_url = '' ): void {
 		$state               = $this->issued_state( $user_id );
 		$state[ $course_id ] = array(
-			'class_id'       => $class_id,
-			'participant_id' => $participant_id,
-			'released'       => $released,
-			'at'             => gmdate( 'Y-m-d H:i:s' ),
+			'class_id'        => $class_id,
+			'participant_id'  => $participant_id,
+			'released'        => $released,
+			'certificate_url' => $certificate_url,
+			'at'              => gmdate( 'Y-m-d H:i:s' ),
 		);
 		update_user_meta( $user_id, self::ISSUED_META, $state );
 	}

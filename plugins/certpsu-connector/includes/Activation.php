@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace CertPSU\Connector;
 
 use CertPSU\Connector\Database\Migration_Runner;
+use CertPSU\Connector\Database\Page_Installer;
 
 /**
  * Handles plugin activation.
@@ -34,11 +35,13 @@ final class Activation {
 			foreach ( $site_ids as $site_id ) {
 				switch_to_blog( (int) $site_id );
 				( new Migration_Runner() )->migrate();
+				( new Page_Installer() )->install();
 				restore_current_blog();
 			}
 			return;
 		}
 
 		( new Migration_Runner() )->migrate();
+		( new Page_Installer() )->install();
 	}
 }
