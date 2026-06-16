@@ -71,25 +71,26 @@ final class CertPSU_Api_Client {
 	 * Release a single participant's certificate on-the-fly.
 	 *
 	 * Idempotent server-side: a participant that already has a certificate is
-	 * not re-issued.
+	 * not re-issued. API v2 references the participant by its server-assigned
+	 * id (returned by add_participants), not by email/common_id.
 	 *
 	 * @param string $class_id Class ID.
-	 * @param string $ref Participant reference: participant id, common_id or email.
+	 * @param string $participant_id Server-assigned participant id.
 	 * @return Api_Response
 	 */
-	public function release_participant( string $class_id, string $ref ): Api_Response {
-		return $this->request( 'POST', "/v2/classes/{$class_id}/release/" . rawurlencode( $ref ), array(), null );
+	public function release_participant( string $class_id, string $participant_id ): Api_Response {
+		return $this->request( 'POST', "/v2/classes/{$class_id}/participants/" . rawurlencode( $participant_id ) . '/release', array(), null );
 	}
 
 	/**
 	 * Get one participant's release status / certificate link.
 	 *
 	 * @param string $class_id Class ID.
-	 * @param string $ref Participant reference: participant id, common_id or email.
+	 * @param string $participant_id Server-assigned participant id.
 	 * @return Api_Response
 	 */
-	public function get_participant_release( string $class_id, string $ref ): Api_Response {
-		return $this->request( 'GET', "/v2/classes/{$class_id}/release/" . rawurlencode( $ref ), array(), null );
+	public function get_participant_release( string $class_id, string $participant_id ): Api_Response {
+		return $this->request( 'GET', "/v2/classes/{$class_id}/participants/" . rawurlencode( $participant_id ) . '/release', array(), null );
 	}
 
 	/**

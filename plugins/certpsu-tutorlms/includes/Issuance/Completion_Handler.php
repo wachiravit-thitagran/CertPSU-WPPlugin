@@ -103,48 +103,80 @@ final class Completion_Handler {
 		}
 
 		$client = certpsu()->api();
-		$ref    = $this->learner->reference( $participant );
 
-		// 2) Add the learner as a participant. A duplicate is not fatal — the
-		// participant simply already exists and can still be released by ref.
+		// 2) Add the learner as a participant. API v2 always returns the participant
+		// with its server-assigned id (for both new and existing participants), so
+		// a successful add is enough to obtain the id — no lookup needed. A failed
+		// add is retried as a whole.
 		$add = $client->add_participants( $class_id, array( 'participants' => array( $participant ) ) );
 		if ( ! $add->success ) {
 			$this->log( $course_id, $user_id, 'add_participant failed: ' . (string) $add->error_message );
-		} else {
-			/**
-			 * Fires after a learner is added to a course's class.
-			 *
-			 * @param int    $course_id Course ID.
-			 * @param int    $user_id   User ID.
-			 * @param string $class_id  CertPSU class id.
-			 */
-			do_action( 'certpsu_tutorlms_participant_added', $course_id, $user_id, $class_id );
+			$this->maybe_retry( $course_id, $user_id, $attempt, new WP_Error( (string) ( $add->error_code ?: 'certpsu_add_failed' ), (string) $add->error_message ) );
+			return;
+		}
+
+		/**
+		 * Fires after a learner is added to a course's class.
+		 *
+		 * @param int    $course_id Course ID.
+		 * @param int    $user_id   User ID.
+		 * @param string $class_id  CertPSU class id.
+		 */
+		do_action( 'certpsu_tutorlms_participant_added', $course_id, $user_id, $class_id );
+
+		$participant_id = $this->extract_participant_id( $add->data );
+		if ( '' === $participant_id ) {
+			$this->maybe_retry( $course_id, $user_id, $attempt, new WP_Error( 'certpsu_no_participant_id', 'add_participants returned no participant id.' ) );
+			return;
 		}
 
 		// 3) Release this learner's certificate on-the-fly (unless auto-release is off).
 		if ( empty( $settings['auto_release'] ) ) {
-			$this->remember( $user_id, $course_id, $class_id, $ref, false );
+			$this->remember( $user_id, $course_id, $class_id, $participant_id, false );
 			return;
 		}
 
-		$release = $client->release_participant( $class_id, $ref );
+		$release = $client->release_participant( $class_id, $participant_id );
 		if ( ! $release->success ) {
 			$this->log( $course_id, $user_id, 'release failed: ' . (string) $release->error_message );
 			$this->maybe_retry( $course_id, $user_id, $attempt, new WP_Error( (string) $release->error_code, (string) $release->error_message ) );
 			return;
 		}
 
-		$this->remember( $user_id, $course_id, $class_id, $ref, true );
+		$this->remember( $user_id, $course_id, $class_id, $participant_id, true );
 
 		/**
 		 * Fires after a learner's certificate is released.
 		 *
-		 * @param int    $course_id Course ID.
-		 * @param int    $user_id   User ID.
-		 * @param string $class_id  CertPSU class id.
-		 * @param string $ref       Participant reference (email).
+		 * @param int    $course_id      Course ID.
+		 * @param int    $user_id        User ID.
+		 * @param string $class_id       CertPSU class id.
+		 * @param string $participant_id CertPSU participant id.
 		 */
-		do_action( 'certpsu_tutorlms_certificate_released', $course_id, $user_id, $class_id, $ref );
+		do_action( 'certpsu_tutorlms_certificate_released', $course_id, $user_id, $class_id, $participant_id );
+	}
+
+	/**
+	 * Extract the participant id from an add_participants response.
+	 *
+	 * We send exactly one participant, and v2 returns it (with its id) in
+	 * `data.participants`, so the first entry's id is the one we want.
+	 *
+	 * @param array<string,mixed>|null $data Unwrapped response data ({ participants: [...] }).
+	 * @return string Participant id, or '' if absent.
+	 */
+	private function extract_participant_id( ?array $data ): string {
+		$participants = is_array( $data ) && isset( $data['participants'] ) && is_array( $data['participants'] )
+			? $data['participants']
+			: array();
+
+		foreach ( $participants as $p ) {
+			if ( is_array( $p ) && ! empty( $p['id'] ) ) {
+				return (string) $p['id'];
+			}
+		}
+
+		return '';
 	}
 
 	/**
@@ -162,20 +194,20 @@ final class Completion_Handler {
 	/**
 	 * Persist issuance state for a learner + course.
 	 *
-	 * @param int    $user_id   User ID.
-	 * @param int    $course_id Course ID.
-	 * @param string $class_id  Class id.
-	 * @param string $ref       Participant reference.
-	 * @param bool   $released  Whether the certificate was released.
+	 * @param int    $user_id        User ID.
+	 * @param int    $course_id      Course ID.
+	 * @param string $class_id       Class id.
+	 * @param string $participant_id CertPSU participant id.
+	 * @param bool   $released       Whether the certificate was released.
 	 * @return void
 	 */
-	private function remember( int $user_id, int $course_id, string $class_id, string $ref, bool $released ): void {
+	private function remember( int $user_id, int $course_id, string $class_id, string $participant_id, bool $released ): void {
 		$state               = $this->issued_state( $user_id );
 		$state[ $course_id ] = array(
-			'class_id' => $class_id,
-			'ref'      => $ref,
-			'released' => $released,
-			'at'       => gmdate( 'Y-m-d H:i:s' ),
+			'class_id'       => $class_id,
+			'participant_id' => $participant_id,
+			'released'       => $released,
+			'at'             => gmdate( 'Y-m-d H:i:s' ),
 		);
 		update_user_meta( $user_id, self::ISSUED_META, $state );
 	}
