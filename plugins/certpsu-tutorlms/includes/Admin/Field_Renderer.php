@@ -30,14 +30,22 @@ final class Field_Renderer {
 	 * @return void
 	 */
 	public function render_all( array $values ): void {
+		$is_first = true;
 		foreach ( Course_Settings::schema() as $section_key => $section ) {
-			echo '<div class="certpsu-section" data-section="' . esc_attr( $section_key ) . '">';
-			echo '<h3 class="certpsu-section-title">' . esc_html( $section['title'] ) . '</h3>';
+			if ( ! $is_first ) {
+				echo '<hr style="margin: 30px 0; border: 0; border-top: 1px solid #ddd;">';
+			}
+			$is_first = false;
+			
+			echo '<div class="certpsu-section postbox" style="padding: 0 15px 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" data-section="' . esc_attr( $section_key ) . '">';
+			echo '<h3 class="certpsu-section-title" style="padding-left: 0; padding-right: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 15px;">' . esc_html( $section['title'] ) . '</h3>';
+			echo '<div class="inside" style="margin: 0; padding: 0;">';
 			echo '<table class="form-table" role="presentation"><tbody>';
 			foreach ( $section['fields'] as $key => $field ) {
 				$this->render_row( $key, $field, $values[ $key ] ?? null );
 			}
 			echo '</tbody></table>';
+			echo '</div>';
 			echo '</div>';
 		}
 	}
