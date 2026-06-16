@@ -46,6 +46,17 @@ final class Settings_Page {
 		echo '<p class="description">' . esc_html__( 'Sent as the X-API-Key header to cert.psu.ac.th. The organization is derived from this key.', 'certpsu-connector' ) . '</p>';
 		echo '</td></tr>';
 
+		// API Base URL.
+		echo '<tr>';
+		echo '<th scope="row"><label for="certpsu_api_base_url">' . esc_html__( 'API Base URL', 'certpsu-connector' ) . '</label></th>';
+		echo '<td>';
+		printf(
+			'<input type="url" id="certpsu_api_base_url" name="api_base_url" value="%s" class="regular-text" placeholder="https://cert.psu.ac.th:8443" />',
+			esc_attr( (string) $settings['api_base_url'] )
+		);
+		echo '<p class="description">' . esc_html__( 'The endpoint URL to send requests to. Defaults to https://cert.psu.ac.th:8443', 'certpsu-connector' ) . '</p>';
+		echo '</td></tr>';
+
 		// Organization ID.
 		echo '<tr>';
 		echo '<th scope="row"><label for="certpsu_organization_id">' . esc_html__( 'Organization ID', 'certpsu-connector' ) . '</label></th>';
@@ -97,6 +108,10 @@ final class Settings_Page {
 
 		if ( isset( $_POST['api_key'] ) ) {
 			$values['api_key'] = sanitize_text_field( trim( (string) wp_unslash( $_POST['api_key'] ) ) );
+		}
+
+		if ( isset( $_POST['api_base_url'] ) ) {
+			$values['api_base_url'] = esc_url_raw( trim( (string) wp_unslash( $_POST['api_base_url'] ) ) );
 		}
 
 		if ( isset( $_POST['organization_id'] ) ) {

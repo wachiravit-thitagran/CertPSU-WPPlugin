@@ -143,9 +143,12 @@ final class CertPSU_Api_Client {
 	 * @return Api_Response
 	 */
 	private function request( string $method, string $path, array $query, ?array $payload ): Api_Response {
-		$base_url = defined( 'CERTPSU_CONNECTOR_API_BASE_URL' )
-			? CERTPSU_CONNECTOR_API_BASE_URL
-			: (string) apply_filters( 'certpsu_connector_api_base_url', 'https://cert.psu.ac.th:8443' );
+		$base_url = $this->settings->api_base_url();
+		if ( '' === $base_url ) {
+			$base_url = defined( 'CERTPSU_CONNECTOR_API_BASE_URL' )
+				? CERTPSU_CONNECTOR_API_BASE_URL
+				: (string) apply_filters( 'certpsu_connector_api_base_url', 'https://cert.psu.ac.th:8443' );
+		}
 
 		$request_id = 'req_' . str_replace( '.', '', uniqid( '', true ) );
 
