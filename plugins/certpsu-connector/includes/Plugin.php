@@ -64,4 +64,13 @@ final class Plugin {
 		$issuance = $this->container->get( 'issuance_repository' )->find_by_id( $issuance_id );
 		return $issuance ?? new \WP_Error( 'certpsu_issuance_not_found', 'Issuance not found.' );
 	}
+
+	/**
+	 * Template Replacer engine for contextual variables.
+	 *
+	 * @return \CertPSU\Connector\Utils\Template_Replacer
+	 */
+	public function replacer(): \CertPSU\Connector\Utils\Template_Replacer {
+		return $this->container->get( 'template_replacer' );
+	}
 }
