@@ -32,10 +32,19 @@ final class Certificate_Repository {
 			$common_id = isset( $participant['common_id'] ) ? (string) $participant['common_id'] : '';
 			$name      = isset( $participant['name'] ) ? (string) $participant['name'] : '';
 
+			$wp_user_id = null;
+			if ( ! empty( $email ) ) {
+				$user = get_user_by( 'email', $email );
+				if ( $user instanceof \WP_User ) {
+					$wp_user_id = $user->ID;
+				}
+			}
+
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				$table,
 				array(
 					'issuance_id'      => $issuance_id,
+					'wp_user_id'       => $wp_user_id,
 					'external_id'      => $participant['external_id'] ?? null,
 					'participant_hash' => hash( 'sha256', strtolower( $email . '|' . $common_id . '|' . $name ) ),
 					'name'             => $participant['name'],
@@ -175,5 +184,31 @@ final class Certificate_Repository {
 			'ready_count'       => $ready_count,
 			'participant_count' => $total,
 		);
+	}
+
+	/**
+	 * Get certificates by WP User ID.
+	 *
+	 * @param int $wp_user_id WP User ID.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function get_by_wp_user_id( int $wp_user_id ): array {
+		global $wpdb;
+
+		$results = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"
+                SELECT c.*, i.class_payload_json 
+                FROM {$wpdb->prefix}certpsu_certificates c
+                LEFT JOIN {$wpdb->prefix}certpsu_issuances i ON c.issuance_id = i.id
+                WHERE c.wp_user_id = %d AND c.status = 'ready'
+                ORDER BY c.created_at DESC
+                ", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wp_user_id
+			),
+			'ARRAY_A'
+		);
+
+		return is_array( $results ) ? $results : array();
 	}
 }
