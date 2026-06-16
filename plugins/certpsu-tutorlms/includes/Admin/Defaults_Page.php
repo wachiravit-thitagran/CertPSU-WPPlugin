@@ -95,8 +95,8 @@ final class Defaults_Page {
 		$renderer = new Field_Renderer( Course_Settings::OPTION_KEY );
 
 		echo '<div class="wrap certpsu-tutorlms-settings">';
-		echo '<h1>' . esc_html__( 'CertPSU Certificates — Defaults', 'certpsu-tutorlms' ) . '</h1>';
-		echo '<p class="description">' . esc_html__( 'These values seed every course. Each course can override them on its editor screen.', 'certpsu-tutorlms' ) . '</p>';
+		echo '<h1>' . esc_html__( 'CertPSU Certificates — TutorLMS Course Defaults', 'certpsu-tutorlms' ) . '</h1>';
+		echo '<p class="description">' . esc_html__( 'These default values seed every TutorLMS course. Each course can override them on its editor screen.', 'certpsu-tutorlms' ) . '</p>';
 		echo '<form method="post" action="options.php">';
 		settings_fields( self::OPTION_GROUP );
 		$renderer->render_all( $values );
