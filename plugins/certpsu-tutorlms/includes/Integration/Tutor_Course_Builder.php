@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace CertPSU\TutorLMS\Integration;
 
 use CertPSU\TutorLMS\Settings\Course_Settings;
+use CertPSU\TutorLMS\Settings\Remote_Options;
 
 /**
  * Surfaces a curated set of CertPSU per-course settings inside the Tutor LMS
@@ -97,8 +98,31 @@ final class Tutor_Course_Builder {
 		wp_localize_script(
 			'certpsu-tutorlms-course-builder',
 			'CertPSUCourseBuilder',
-			array( 'groups' => $groups )
+			array(
+				'groups'               => $groups,
+				'certificateTemplates' => $this->to_js_options( Remote_Options::certificate_templates() ),
+				'emailParticipant'     => $this->to_js_options( Remote_Options::email_templates( 'participant' ) ),
+				'emailRequired'        => $this->to_js_options( Remote_Options::email_templates( 'endorser_required_endorsement' ) ),
+				'emailWithout'         => $this->to_js_options( Remote_Options::email_templates( 'endorser_without_endorsement' ) ),
+			)
 		);
+	}
+
+	/**
+	 * Convert an [id => label] map into the builder's [{value,label}] option list.
+	 *
+	 * @param array<string,string> $map Options map.
+	 * @return array<int,array{value:string,label:string}>
+	 */
+	private function to_js_options( array $map ): array {
+		$out = array();
+		foreach ( $map as $value => $label ) {
+			$out[] = array(
+				'value' => (string) $value,
+				'label' => (string) $label,
+			);
+		}
+		return $out;
 	}
 
 	/**

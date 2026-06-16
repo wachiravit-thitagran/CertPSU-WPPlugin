@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace CertPSU\TutorLMS\Admin;
 
 use CertPSU\TutorLMS\Settings\Course_Settings;
+use CertPSU\TutorLMS\Settings\Remote_Options;
 
 /**
  * Outputs HTML form controls for the settings schema.
@@ -67,29 +68,36 @@ final class Field_Renderer {
 		echo '<th scope="row"><label for="' . esc_attr( $id ) . '">' . esc_html( $label ) . '</label></th>';
 		echo '<td>';
 
-		switch ( $type ) {
-			case 'checkbox':
-				$this->checkbox( $id, $key, (bool) $value, $label );
-				break;
-			case 'textarea':
-				$this->textarea( $id, $key, (string) ( is_string( $value ) ? $value : '' ) );
-				break;
-			case 'date':
-				$this->input( $id, $key, (string) ( is_string( $value ) ? $value : '' ), 'date' );
-				break;
-			case 'select':
-				$this->select( $id, $key, (string) ( is_string( $value ) ? $value : '' ), $field['options'] ?? array() );
-				break;
-			case 'list':
-				$this->list_field( $id, $key, is_array( $value ) ? $value : array() );
-				break;
-			case 'endorsers':
-				$this->endorsers( $key, is_array( $value ) ? $value : array() );
-				break;
-			case 'text':
-			default:
-				$this->input( $id, $key, (string) ( is_string( $value ) ? $value : '' ), 'text' );
-				break;
+		$source          = isset( $field['options_source'] ) ? (string) $field['options_source'] : '';
+		$dynamic_options = '' !== $source ? Remote_Options::for_source( $source ) : array();
+
+		if ( array() !== $dynamic_options ) {
+			$this->dynamic_select( $id, $key, (string) ( is_string( $value ) ? $value : '' ), $dynamic_options );
+		} else {
+			switch ( $type ) {
+				case 'checkbox':
+					$this->checkbox( $id, $key, (bool) $value, $label );
+					break;
+				case 'textarea':
+					$this->textarea( $id, $key, (string) ( is_string( $value ) ? $value : '' ) );
+					break;
+				case 'date':
+					$this->input( $id, $key, (string) ( is_string( $value ) ? $value : '' ), 'date' );
+					break;
+				case 'select':
+					$this->select( $id, $key, (string) ( is_string( $value ) ? $value : '' ), $field['options'] ?? array() );
+					break;
+				case 'list':
+					$this->list_field( $id, $key, is_array( $value ) ? $value : array() );
+					break;
+				case 'endorsers':
+					$this->endorsers( $key, is_array( $value ) ? $value : array() );
+					break;
+				case 'text':
+				default:
+					$this->input( $id, $key, (string) ( is_string( $value ) ? $value : '' ), 'text' );
+					break;
+			}
 		}
 
 		if ( ! empty( $field['help'] ) ) {
@@ -187,6 +195,24 @@ final class Field_Renderer {
 	}
 
 	/**
+	 * Remote-populated select with a blank choice; preserves the current value
+	 * even when it is no longer present in the option list.
+	 *
+	 * @param string               $id      Element id.
+	 * @param string               $key     Field key.
+	 * @param string               $value   Selected value.
+	 * @param array<string,string> $options Option map (id => label).
+	 * @return void
+	 */
+	private function dynamic_select( string $id, string $key, string $value, array $options ): void {
+		$choices = array( '' => __( '— Select —', 'certpsu-tutorlms' ) ) + $options;
+		if ( '' !== $value && ! array_key_exists( $value, $choices ) ) {
+			$choices[ $value ] = $value . ' ' . __( '(current)', 'certpsu-tutorlms' );
+		}
+		$this->select( $id, $key, $value, $choices );
+	}
+
+	/**
 	 * Newline-separated list field.
 	 *
 	 * @param string           $id    Element id.
@@ -213,16 +239,17 @@ final class Field_Renderer {
 	 * @return void
 	 */
 	private function endorsers( string $key, array $value ): void {
-		$base = $this->name_prefix . '[' . $key . ']';
+		$base             = $this->name_prefix . '[' . $key . ']';
+		$endorser_options = Remote_Options::endorsers();
 
 		echo '<div class="certpsu-endorsers" data-base="' . esc_attr( $base ) . '">';
 		echo '<div class="certpsu-endorsers-rows">';
 
 		if ( array() === $value ) {
-			$this->endorser_row( $base, 0, array() );
+			$this->endorser_row( $base, 0, array(), $endorser_options );
 		} else {
 			foreach ( array_values( $value ) as $i => $row ) {
-				$this->endorser_row( $base, (int) $i, is_array( $row ) ? $row : array() );
+				$this->endorser_row( $base, (int) $i, is_array( $row ) ? $row : array(), $endorser_options );
 			}
 		}
 
@@ -231,7 +258,7 @@ final class Field_Renderer {
 
 		// Row template for JS cloning (index placeholder __i__).
 		echo '<script type="text/html" class="certpsu-endorser-template">';
-		$this->endorser_row( $base, '__i__', array() );
+		$this->endorser_row( $base, '__i__', array(), $endorser_options );
 		echo '</script>';
 		echo '</div>';
 	}
@@ -244,12 +271,25 @@ final class Field_Renderer {
 	 * @param array<string,string> $row Row data.
 	 * @return void
 	 */
-	private function endorser_row( string $base, int|string $i, array $row ): void {
+	private function endorser_row( string $base, int|string $i, array $row, array $endorser_options = array() ): void {
 		$n = static fn( string $f ): string => $base . '[' . $i . '][' . $f . ']';
 
 		echo '<div class="certpsu-endorser-row">';
 		$this->endorser_text( $n( 'endorser_id' ), (string) ( $row['endorser_id'] ?? '' ), __( 'endorser_id', 'certpsu-tutorlms' ) );
-		$this->endorser_text( $n( 'user' ), (string) ( $row['user'] ?? '' ), __( 'user id', 'certpsu-tutorlms' ) );
+		if ( array() !== $endorser_options ) {
+			$user_choices = array( '' => __( '— user —', 'certpsu-tutorlms' ) ) + $endorser_options;
+			$user_value   = (string) ( $row['user'] ?? '' );
+			if ( '' !== $user_value && ! array_key_exists( $user_value, $user_choices ) ) {
+				$user_choices[ $user_value ] = $user_value;
+			}
+			printf(
+				'<select name="%1$s">%2$s</select>',
+				esc_attr( $n( 'user' ) ),
+				$this->options_html( $user_choices, $user_value ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			);
+		} else {
+			$this->endorser_text( $n( 'user' ), (string) ( $row['user'] ?? '' ), __( 'user id', 'certpsu-tutorlms' ) );
+		}
 		$this->endorser_text( $n( 'name' ), (string) ( $row['name'] ?? '' ), __( 'name', 'certpsu-tutorlms' ) );
 		$this->endorser_text( $n( 'position' ), (string) ( $row['position'] ?? '' ), __( 'position', 'certpsu-tutorlms' ) );
 
