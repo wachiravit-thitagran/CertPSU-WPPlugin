@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CertPSU Connector
  * Description: Connector plugin for async certificate issuance through cert.psu.ac.th.
- * Version: 0.1.2
+ * Version: 0.1.3
  * Requires PHP: 8.2
  * Requires at least: 6.5
  *

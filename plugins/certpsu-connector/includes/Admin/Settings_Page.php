@@ -28,7 +28,6 @@ final class Settings_Page {
 		$this->maybe_save( $service );
 
 		$settings   = $service->all();
-		$masked_key = '' !== $settings['api_key'] ? str_repeat( '•', 8 ) . substr( (string) $settings['api_key'], -4 ) : '';
 
 		echo '<div class="wrap"><h1>CertPSU Connector Settings</h1>';
 		echo '<form method="post">';
@@ -40,10 +39,11 @@ final class Settings_Page {
 		echo '<th scope="row"><label for="certpsu_api_key">' . esc_html__( 'API key', 'certpsu-connector' ) . '</label></th>';
 		echo '<td>';
 		printf(
-			'<input type="password" id="certpsu_api_key" name="api_key" value="" class="regular-text" autocomplete="new-password" placeholder="%s" />',
-			esc_attr( '' !== $masked_key ? $masked_key : __( 'Enter your CertPSU API key', 'certpsu-connector' ) )
+			'<input type="text" id="certpsu_api_key" name="api_key" value="%s" class="regular-text" placeholder="%s" />',
+			esc_attr( (string) $settings['api_key'] ),
+			esc_attr__( 'Enter your CertPSU API key', 'certpsu-connector' )
 		);
-		echo '<p class="description">' . esc_html__( 'Sent as the X-API-Key header to cert.psu.ac.th. The organization is derived from this key. Leave blank to keep the current key.', 'certpsu-connector' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Sent as the X-API-Key header to cert.psu.ac.th. The organization is derived from this key.', 'certpsu-connector' ) . '</p>';
 		echo '</td></tr>';
 
 		// API log retention.
@@ -83,11 +83,8 @@ final class Settings_Page {
 			'api_log_retention_days' => isset( $_POST['api_log_retention_days'] ) ? max( 0, (int) $_POST['api_log_retention_days'] ) : 0,
 		);
 
-		// Only overwrite the API key when a new value is entered (the field is
-		// rendered empty and shows a masked placeholder).
-		$api_key = isset( $_POST['api_key'] ) ? trim( (string) wp_unslash( $_POST['api_key'] ) ) : '';
-		if ( '' !== $api_key ) {
-			$values['api_key'] = sanitize_text_field( $api_key );
+		if ( isset( $_POST['api_key'] ) ) {
+			$values['api_key'] = sanitize_text_field( trim( (string) wp_unslash( $_POST['api_key'] ) ) );
 		}
 
 		$service->update( $values );
