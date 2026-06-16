@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CertPSU TutorLMS Bridge
  * Description: Intercepts TutorLMS course completion and queues certificate issuance via CertPSU.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Requires PHP: 8.2
  * Requires at least: 6.5
  *
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CERTPSU_TUTORLMS_VERSION', '0.1.0' );
+define( 'CERTPSU_TUTORLMS_VERSION', '0.1.1' );
 define( 'CERTPSU_TUTORLMS_FILE', __FILE__ );
 define( 'CERTPSU_TUTORLMS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CERTPSU_TUTORLMS_URL', plugin_dir_url( __FILE__ ) );

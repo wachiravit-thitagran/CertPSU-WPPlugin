@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CertPSU Connector
  * Description: Connector plugin for async certificate issuance through cert.psu.ac.th.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Requires PHP: 8.2
  * Requires at least: 6.5
  *
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CERTPSU_CONNECTOR_VERSION', '0.1.0' );
+define( 'CERTPSU_CONNECTOR_VERSION', '0.1.1' );
 define( 'CERTPSU_CONNECTOR_FILE', __FILE__ );
 define( 'CERTPSU_CONNECTOR_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CERTPSU_CONNECTOR_URL', plugin_dir_url( __FILE__ ) );
