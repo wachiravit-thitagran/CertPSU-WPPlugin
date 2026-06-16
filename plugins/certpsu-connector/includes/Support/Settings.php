@@ -29,6 +29,7 @@ final class Settings {
 			get_option( self::OPTION_KEY, array() ),
 			array(
 				'api_key'                => '',
+				'api_base_url'           => 'https://cert.psu.ac.th:8443',
 				'organization_id'        => '',
 				'api_log_retention_days' => 0,
 			)
@@ -43,6 +44,16 @@ final class Settings {
 	public function api_key(): string {
 		$all = $this->all();
 		return isset( $all['api_key'] ) ? (string) $all['api_key'] : '';
+	}
+
+	/**
+	 * Get API Base URL.
+	 *
+	 * @return string
+	 */
+	public function api_base_url(): string {
+		$all = $this->all();
+		return isset( $all['api_base_url'] ) ? rtrim( (string) $all['api_base_url'], '/' ) : 'https://cert.psu.ac.th:8443';
 	}
 
 	/**
