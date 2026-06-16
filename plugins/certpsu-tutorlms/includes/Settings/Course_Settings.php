@@ -51,6 +51,21 @@ final class Course_Settings {
 	}
 
 	/**
+	 * Endorser position slots supported by CertPSU (valid endorser_id values).
+	 *
+	 * @return array<string,string>
+	 */
+	public static function endorser_positions(): array {
+		return array(
+			'endorser_1' => 'Endorser 1',
+			'endorser_2' => 'Endorser 2',
+			'endorser_3' => 'Endorser 3',
+			'endorser_4' => 'Endorser 4',
+			'endorser_5' => 'Endorser 5',
+		);
+	}
+
+	/**
 	 * Field schema grouped into sections. Used to render both the course metabox
 	 * and the global defaults page, and to sanitize input.
 	 *

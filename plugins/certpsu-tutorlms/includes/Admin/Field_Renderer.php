@@ -275,7 +275,12 @@ final class Field_Renderer {
 		$n = static fn( string $f ): string => $base . '[' . $i . '][' . $f . ']';
 
 		echo '<div class="certpsu-endorser-row">';
-		$this->endorser_text( $n( 'endorser_id' ), (string) ( $row['endorser_id'] ?? '' ), __( 'endorser_id', 'certpsu-tutorlms' ) );
+		$endorser_id_value = (string) ( $row['endorser_id'] ?? '' );
+		printf(
+			'<select name="%1$s">%2$s</select>',
+			esc_attr( $n( 'endorser_id' ) ),
+			$this->options_html( array( '' => __( '— endorser —', 'certpsu-tutorlms' ) ) + Course_Settings::endorser_positions(), $endorser_id_value ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		);
 		if ( array() !== $endorser_options ) {
 			$user_choices = array( '' => __( '— user —', 'certpsu-tutorlms' ) ) + $endorser_options;
 			$user_value   = (string) ( $row['user'] ?? '' );
