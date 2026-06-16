@@ -120,7 +120,7 @@ final class Course_Settings {
 					),
 					'printed_name'                => array(
 						'label' => 'Printed name',
-						'type'  => 'text',
+						'type'  => 'textarea',
 						'help'  => 'Leave blank to use the course title.',
 					),
 					'description'                 => array(

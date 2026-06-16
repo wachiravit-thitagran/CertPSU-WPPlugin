@@ -49,7 +49,7 @@
 		add( slot, selectOrText( { name: 'certpsu_endorser_without_endorsement_email_template', label: 'Endorser (without endorsement) email template', placeholder: 'email template id', priority: nextPrio() }, cb.emailWithout ) );
 
 		add( slot, { name: 'certpsu_class_name', type: 'text', label: 'Class name', placeholder: 'Leave blank to use course title', priority: nextPrio() } );
-		add( slot, { name: 'certpsu_printed_name', type: 'text', label: 'Printed name', placeholder: 'Leave blank to use course title', priority: nextPrio() } );
+		add( slot, { name: 'certpsu_printed_name', type: 'textarea', label: 'Printed name', placeholder: 'Leave blank to use course title', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_description', type: 'textarea', label: 'Description', priority: nextPrio() } );
 		
 		add( slot, { name: 'certpsu_started_date', type: 'text', label: 'Started date (YYYY-MM-DD)', placeholder: 'Leave blank to use course creation date', priority: nextPrio() } );

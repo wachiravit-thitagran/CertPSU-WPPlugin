@@ -209,7 +209,7 @@ final class Tutor_Course_Builder {
 			} elseif ( 'template_group' === $key ) {
 				$raw = sanitize_text_field( $raw );
 				$overrides[ $key ] = array_key_exists( $raw, $groups ) ? $raw : 'participant';
-			} elseif ( 'description' === $key || 'certificate_text' === $key ) {
+			} elseif ( 'description' === $key || 'certificate_text' === $key || 'printed_name' === $key ) {
 				$overrides[ $key ] = sanitize_textarea_field( $raw );
 			} else {
 				$overrides[ $key ] = sanitize_text_field( $raw );
