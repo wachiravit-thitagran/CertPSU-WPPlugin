@@ -62,4 +62,67 @@
 	} else {
 		document.addEventListener( 'DOMContentLoaded', register );
 	}
+
+	// Hack: Tutor LMS Course Builder (React) doesn't support a native "group/card" field type.
+	// We use a MutationObserver/Interval to find our fields and style their containers to look like a card.
+	var style = document.createElement('style');
+	style.innerHTML = `
+		.certpsu-cb-row {
+			background-color: #FFFFFF;
+			padding: 24px 32px;
+			border-left: 1px solid #E1E6EB;
+			border-right: 1px solid #E1E6EB;
+			border-bottom: 1px solid #E1E6EB;
+			margin-bottom: 0 !important;
+		}
+		.certpsu-cb-first {
+			border-top: 1px solid #E1E6EB;
+			border-radius: 6px 6px 0 0;
+			margin-top: 24px !important;
+			position: relative;
+		}
+		.certpsu-cb-first::before {
+			content: "CertPSU Certificate Settings";
+			display: block;
+			font-size: 16px;
+			font-weight: 500;
+			color: #212327;
+			margin-bottom: 16px;
+			padding-bottom: 16px;
+			border-bottom: 1px solid #E1E6EB;
+		}
+		.certpsu-cb-last {
+			border-radius: 0 0 6px 6px;
+			margin-bottom: 24px !important;
+		}
+	`;
+	document.head.appendChild(style);
+
+	setInterval(function() {
+		var fields = document.querySelectorAll('[name^="certpsu_"]');
+		if (fields.length === 0) return;
+
+		var rows = [];
+		fields.forEach(function(field) {
+			// Find the closest wrapper that is a sibling to other rows (usually a div wrapping the label and input)
+			var row = field.closest('.tutor-field-wrapper, .tutor-field, .tutor-form-row') || field.parentNode;
+			if (row && rows.indexOf(row) === -1) {
+				rows.push(row);
+			}
+		});
+
+		if (rows.length > 0) {
+			rows.forEach(function(row, index) {
+				if (!row.classList.contains('certpsu-cb-row')) {
+					row.classList.add('certpsu-cb-row');
+				}
+				if (index === 0 && !row.classList.contains('certpsu-cb-first')) {
+					row.classList.add('certpsu-cb-first');
+				}
+				if (index === rows.length - 1 && !row.classList.contains('certpsu-cb-last')) {
+					row.classList.add('certpsu-cb-last');
+				}
+			});
+		}
+	}, 1000);
 } )();
