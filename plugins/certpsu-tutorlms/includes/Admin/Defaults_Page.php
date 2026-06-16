@@ -44,9 +44,10 @@ final class Defaults_Page {
 	 * @return void
 	 */
 	public function add_page(): void {
-		add_options_page(
-			__( 'CertPSU Certificates (TutorLMS)', 'certpsu-tutorlms' ),
-			__( 'CertPSU Certificates', 'certpsu-tutorlms' ),
+		add_submenu_page(
+			'certpsu-connector-settings',
+			__( 'TutorLMS Integration', 'certpsu-tutorlms' ),
+			__( 'TutorLMS Integration', 'certpsu-tutorlms' ),
 			'manage_options',
 			self::MENU_SLUG,
 			array( $this, 'render' )
