@@ -79,10 +79,10 @@ final class Field_Renderer {
 					$this->checkbox( $id, $key, (bool) $value, $label );
 					break;
 				case 'textarea':
-					$this->textarea( $id, $key, (string) ( is_string( $value ) ? $value : '' ) );
+					$this->textarea( $id, $key, (string) ( is_string( $value ) ? $value : '' ), $field['placeholder'] ?? '' );
 					break;
 				case 'date':
-					$this->input( $id, $key, (string) ( is_string( $value ) ? $value : '' ), 'date' );
+					$this->input( $id, $key, (string) ( is_string( $value ) ? $value : '' ), 'date', $field['placeholder'] ?? '' );
 					break;
 				case 'select':
 					$this->select( $id, $key, (string) ( is_string( $value ) ? $value : '' ), $field['options'] ?? array() );
@@ -95,7 +95,7 @@ final class Field_Renderer {
 					break;
 				case 'text':
 				default:
-					$this->input( $id, $key, (string) ( is_string( $value ) ? $value : '' ), 'text' );
+					$this->input( $id, $key, (string) ( is_string( $value ) ? $value : '' ), 'text', $field['placeholder'] ?? '' );
 					break;
 			}
 		}
@@ -126,13 +126,14 @@ final class Field_Renderer {
 	 * @param string $type  Input type.
 	 * @return void
 	 */
-	private function input( string $id, string $key, string $value, string $type ): void {
+	private function input( string $id, string $key, string $value, string $type, string $placeholder = '' ): void {
 		printf(
-			'<input type="%1$s" id="%2$s" name="%3$s" value="%4$s" class="regular-text" />',
+			'<input type="%1$s" id="%2$s" name="%3$s" value="%4$s" placeholder="%5$s" class="regular-text" />',
 			esc_attr( $type ),
 			esc_attr( $id ),
 			esc_attr( $this->name( $key ) ),
-			esc_attr( $value )
+			esc_attr( $value ),
+			esc_attr( $placeholder )
 		);
 	}
 
@@ -163,12 +164,13 @@ final class Field_Renderer {
 	 * @param string $value Value.
 	 * @return void
 	 */
-	private function textarea( string $id, string $key, string $value ): void {
+	private function textarea( string $id, string $key, string $value, string $placeholder = '' ): void {
 		printf(
-			'<textarea id="%1$s" name="%2$s" rows="3" class="large-text">%3$s</textarea>',
+			'<textarea id="%1$s" name="%2$s" rows="3" class="large-text" placeholder="%4$s">%3$s</textarea>',
 			esc_attr( $id ),
 			esc_attr( $this->name( $key ) ),
-			esc_textarea( $value )
+			esc_textarea( $value ),
+			esc_attr( $placeholder )
 		);
 	}
 

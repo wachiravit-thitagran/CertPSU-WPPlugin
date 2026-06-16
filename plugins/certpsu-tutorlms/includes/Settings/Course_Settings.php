@@ -201,27 +201,34 @@ final class Course_Settings {
 						'help'           => 'Select a certificate template from the organization. Falls back to manual id entry when the API is unavailable.',
 					),
 					'template_name'     => array(
-						'label' => 'Template name',
-						'type'  => 'text',
-						'help'  => 'Leave blank to use the course title.',
+						'label'       => 'Template name',
+						'type'        => 'text',
+						'placeholder' => 'เกียรติบัตรผู้เข้าร่วม',
+						'default'     => 'เกียรติบัตรผู้เข้าร่วม',
+					),
+					'organization_name' => array(
+						'label'       => 'Organization name (printed)',
+						'type'        => 'text',
+						'placeholder' => 'สำนักนวัตกรรมดิจิทัลและระบบอัจฉริยะ',
+						'default'     => 'สำนักนวัตกรรมดิจิทัลและระบบอัจฉริยะ',
+					),
+					'declaration_text'  => array(
+						'label'       => 'Declaration text',
+						'type'        => 'text',
+						'placeholder' => 'มอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า',
+						'default'     => 'มอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า',
+					),
+					'certificate_text'  => array(
+						'label'       => 'Certificate text',
+						'type'        => 'textarea',
+						'placeholder' => 'ได้ปฏิบัติงานอาสาผ่านระดับผู้เชี่ยวชาญถอดลายลักษณ์',
+						'default'     => 'ได้ปฏิบัติงานอาสาผ่านระดับผู้เชี่ยวชาญถอดลายลักษณ์',
 					),
 					'template_group'    => array(
 						'label'   => 'Group',
 						'type'    => 'select',
 						'options' => self::groups(),
 						'default' => 'participant',
-					),
-					'certificate_text'  => array(
-						'label' => 'Certificate text',
-						'type'  => 'textarea',
-					),
-					'declaration_text'  => array(
-						'label' => 'Declaration text',
-						'type'  => 'text',
-					),
-					'organization_name' => array(
-						'label' => 'Organization name (printed)',
-						'type'  => 'text',
 					),
 					'remark'            => array(
 						'label' => 'Remark',
