@@ -71,6 +71,14 @@ final class Course_Metabox {
 			echo '<p class="description">' . esc_html__( 'A CertPSU class is created automatically the first time a learner completes this course.', 'certpsu-tutorlms' ) . '</p>';
 		}
 
+		// Retroactive sync link.
+		$sync_url = wp_nonce_url(
+			admin_url( 'admin-post.php?action=certpsu_tutorlms_sync_retroactive&course_id=' . $post->ID ),
+			'certpsu_tutorlms_sync_retroactive'
+		);
+		echo '<p><a href="' . esc_url( $sync_url ) . '" class="button button-secondary">' . esc_html__( 'Sync past completions', 'certpsu-tutorlms' ) . '</a></p>';
+
+
 		$values   = Course_Settings::for_course( (int) $post->ID );
 		$renderer = new Field_Renderer( self::INPUT_PREFIX );
 		$renderer->render_all( $values );

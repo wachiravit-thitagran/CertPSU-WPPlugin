@@ -45,6 +45,8 @@ final class Plugin {
 			( new Course_Metabox() )->register();
 			( new Defaults_Page() )->register();
 			( new Assets() )->register();
+			( new \CertPSU\TutorLMS\Admin\Retroactive_Sync() )->register();
+			( new \CertPSU\TutorLMS\Admin\Admin_Notices() )->register();
 		}
 	}
 }
