@@ -27,7 +27,7 @@ final class Settings_Page {
 		$service = certpsu()->container()->get( 'settings' );
 		$this->maybe_save( $service );
 
-		$settings   = $service->all();
+		$settings = $service->all();
 
 		echo '<div class="wrap"><h1>CertPSU Connector Settings</h1>';
 		echo '<form method="post">';

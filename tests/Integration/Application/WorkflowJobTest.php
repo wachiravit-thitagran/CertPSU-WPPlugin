@@ -80,9 +80,9 @@ final class WorkflowJobTest extends TestCase {
 								'data' => array(
 									'participants' => array(
 										'srv-abc' => array(
-											'id'              => 'srv-abc',
-											'email'           => 'alice@example.com',
-											'certificate_id'  => 'cert-1',
+											'id'    => 'srv-abc',
+											'email' => 'alice@example.com',
+											'certificate_id' => 'cert-1',
 											'certificate_url' => 'https://example.test/cert.pdf',
 										),
 									),

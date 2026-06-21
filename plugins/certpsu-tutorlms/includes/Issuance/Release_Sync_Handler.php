@@ -76,18 +76,20 @@ final class Release_Sync_Handler {
 			return;
 		}
 
-		$query = new \WP_Query( array(
-			'post_type'      => 'tutor_course',
-			'post_status'    => 'publish',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-			'meta_query'     => array(
-				array(
-					'key'     => Course_Class_Manager::CLASS_ID_META,
-					'compare' => 'EXISTS',
+		$query = new \WP_Query(
+			array(
+				'post_type'      => 'tutor_course',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_query'     => array(
+					array(
+						'key'     => Course_Class_Manager::CLASS_ID_META,
+						'compare' => 'EXISTS',
+					),
 				),
-			),
-		) );
+			)
+		);
 
 		$manager = new Course_Class_Manager();
 
@@ -118,12 +120,17 @@ final class Release_Sync_Handler {
 		}
 
 		global $wpdb;
-		$user_ids = $wpdb->get_col( $wpdb->prepare( "
+		$user_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"
 			SELECT DISTINCT post_author
 			FROM {$wpdb->posts}
 			WHERE post_type = 'tutor_enrolled'
 			AND post_parent = %d
-		", $course_id ) );
+		",
+				$course_id
+			)
+		);
 
 		if ( empty( $user_ids ) ) {
 			return;
@@ -176,11 +183,11 @@ final class Release_Sync_Handler {
 		$cert_url = (string) ( $response->data['certificate_url'] ?? '' );
 		if ( '' !== $cert_url ) {
 			$state = get_user_meta( $user_id, self::ISSUED_META, true );
-			
+
 			if ( is_array( $state ) && isset( $state[ $course_id ] ) ) {
 				$state[ $course_id ]['released']        = true;
 				$state[ $course_id ]['certificate_url'] = $cert_url;
-				
+
 				update_user_meta( $user_id, self::ISSUED_META, $state );
 			}
 		}

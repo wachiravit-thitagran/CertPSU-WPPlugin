@@ -78,7 +78,6 @@ final class Course_Metabox {
 		);
 		echo '<p><a href="' . esc_url( $sync_url ) . '" class="button button-secondary">' . esc_html__( 'Sync past completions', 'certpsu-tutorlms' ) . '</a></p>';
 
-
 		$values   = Course_Settings::for_course( (int) $post->ID );
 		$renderer = new Field_Renderer( self::INPUT_PREFIX );
 		$renderer->render_all( $values );

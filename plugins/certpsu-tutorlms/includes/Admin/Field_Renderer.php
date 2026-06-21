@@ -37,7 +37,7 @@ final class Field_Renderer {
 				echo '<hr style="margin: 30px 0; border: 0; border-top: 1px solid #ddd;">';
 			}
 			$is_first = false;
-			
+
 			echo '<div class="certpsu-section postbox" style="padding: 0 15px 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" data-section="' . esc_attr( $section_key ) . '">';
 			echo '<h3 class="certpsu-section-title" style="padding-left: 0; padding-right: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 15px;">' . esc_html( $section['title'] ) . '</h3>';
 			echo '<div class="inside" style="margin: 0; padding: 0;">';
@@ -177,10 +177,10 @@ final class Field_Renderer {
 	/**
 	 * Select.
 	 *
-	 * @param string                $id      Element id.
-	 * @param string                $key     Field key.
-	 * @param string                $value   Selected value.
-	 * @param array<string,string>  $options Options.
+	 * @param string               $id      Element id.
+	 * @param string               $key     Field key.
+	 * @param string               $value   Selected value.
+	 * @param array<string,string> $options Options.
 	 * @return void
 	 */
 	private function select( string $id, string $key, string $value, array $options ): void {
@@ -268,8 +268,8 @@ final class Field_Renderer {
 	/**
 	 * Single endorser row.
 	 *
-	 * @param string              $base Base name.
-	 * @param int|string          $i    Row index (or __i__ placeholder).
+	 * @param string               $base Base name.
+	 * @param int|string           $i    Row index (or __i__ placeholder).
 	 * @param array<string,string> $row Row data.
 	 * @return void
 	 */
@@ -303,12 +303,24 @@ final class Field_Renderer {
 		printf(
 			'<select name="%1$s">%2$s</select>',
 			esc_attr( $n( 'endorse_requirement' ) ),
-			$this->options_html( array( 'required' => 'required', 'not_required' => 'not required' ), (string) ( $row['endorse_requirement'] ?? 'required' ) ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			$this->options_html(
+				array(
+					'required'     => 'required',
+					'not_required' => 'not required',
+				),
+				(string) ( $row['endorse_requirement'] ?? 'required' )
+			) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		);
 		printf(
 			'<select name="%1$s">%2$s</select>',
 			esc_attr( $n( 'auto_send_mail_to_endorse' ) ),
-			$this->options_html( array( 'auto' => 'auto', 'not_auto' => 'not auto' ), (string) ( $row['auto_send_mail_to_endorse'] ?? 'auto' ) ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			$this->options_html(
+				array(
+					'auto'     => 'auto',
+					'not_auto' => 'not auto',
+				),
+				(string) ( $row['auto_send_mail_to_endorse'] ?? 'auto' )
+			) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		);
 
 		echo '<button type="button" class="button-link certpsu-remove-endorser">' . esc_html__( 'Remove', 'certpsu-tutorlms' ) . '</button>';

@@ -23,7 +23,7 @@ final class Migration_002_Add_WP_User_ID {
 		global $wpdb;
 
 		$certificates = $wpdb->prefix . 'certpsu_certificates';
-		
+
 		$col_exists = $wpdb->get_results( $wpdb->prepare( "SHOW COLUMNS FROM {$certificates} LIKE %s", 'wp_user_id' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( empty( $col_exists ) ) {
 			$wpdb->query( "ALTER TABLE {$certificates} ADD COLUMN wp_user_id bigint unsigned DEFAULT NULL AFTER issuance_id" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

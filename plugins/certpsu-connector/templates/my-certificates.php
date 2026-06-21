@@ -5,7 +5,7 @@
  * This template can be overridden by copying it to yourtheme/certpsu/my-certificates.php.
  *
  * @package CertPSU\Connector\Templates
- * 
+ *
  * @var array<int,array<string,mixed>> $certificates List of certificates.
  */
 
@@ -69,11 +69,11 @@ if ( empty( $certificates ) ) {
 		</thead>
 		<tbody>
 			<?php foreach ( $certificates as $cert ) : ?>
-				<?php 
+				<?php
 					$date_formatted = '';
-					if ( ! empty( $cert['issued_at'] ) ) {
-						$date_formatted = date_i18n( get_option( 'date_format' ), strtotime( $cert['issued_at'] ) );
-					}
+				if ( ! empty( $cert['issued_at'] ) ) {
+					$date_formatted = date_i18n( get_option( 'date_format' ), strtotime( $cert['issued_at'] ) );
+				}
 				?>
 				<tr>
 					<td>

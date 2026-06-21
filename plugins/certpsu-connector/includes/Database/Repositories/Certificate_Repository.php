@@ -136,10 +136,10 @@ final class Certificate_Repository {
 			// Reconcile by email: it is unique within an issuance (the validator
 			// rejects duplicate participant emails before enqueue) and is the only
 			// stable key we share with API v2, which generates participant ids itself.
-			$email           = isset( $participant['email'] ) ? (string) $participant['email'] : '';
-			$participant_id  = $participant['id'] ?? null;
-			$cert            = $participant['certificate_id'] ?? null;
-			$url             = $participant['certificate_url'] ?? null;
+			$email          = isset( $participant['email'] ) ? (string) $participant['email'] : '';
+			$participant_id = $participant['id'] ?? null;
+			$cert           = $participant['certificate_id'] ?? null;
+			$url            = $participant['certificate_url'] ?? null;
 
 			if ( '' === $email ) {
 				continue;

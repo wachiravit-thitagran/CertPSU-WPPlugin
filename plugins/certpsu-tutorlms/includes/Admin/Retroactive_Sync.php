@@ -57,7 +57,7 @@ final class Retroactive_Sync {
 				if ( tutor_utils()->is_completed_course( $course_id, $user_id ) ) {
 					// Firing the tutor hook enqueues the action via our Listener
 					do_action( 'tutor_course_complete_after', $course_id, $user_id );
-					$queued_count++;
+					++$queued_count;
 				}
 			}
 		}

@@ -134,19 +134,19 @@ class Issuances_List_Table extends \WP_List_Table {
 		if ( '' !== $class_id ) {
 			$config_json = (string) ( $item['certpsu_config_json'] ?? '{}' );
 			$config      = json_decode( $config_json, true );
-			
+
 			// Use saved organization_id from config, or fallback to the global setting.
-			$org_id      = is_array( $config ) && isset( $config['organization_id'] ) ? $config['organization_id'] : '';
+			$org_id = is_array( $config ) && isset( $config['organization_id'] ) ? $config['organization_id'] : '';
 			if ( '' === $org_id ) {
 				$org_id = certpsu()->container()->get( 'settings' )->organization_id();
 			}
-			
+
 			$view_url = sprintf( 'https://cert.psu.ac.th/th/admin/classes/%s', urlencode( $class_id ) );
 			if ( '' !== $org_id ) {
 				$view_url = add_query_arg( 'organization_id', urlencode( (string) $org_id ), $view_url );
 			}
-			
-			$tools[]  = sprintf(
+
+			$tools[] = sprintf(
 				'<a href="%1$s" target="_blank" title="%2$s"><span class="dashicons dashicons-external"></span> View on CertPSU</a>',
 				esc_url( $view_url ),
 				esc_attr__( 'View on CertPSU', 'certpsu-connector' )

@@ -44,8 +44,16 @@ final class SettingsAndPayloadTest extends TestCase {
 				'tags'                        => "a\nb\n\nc",  // -> list.
 				'template_group'              => 'winner',
 				'endorsers'                   => array(
-					array( 'endorser_id' => 'e1', 'user' => 'u1', 'name' => 'Dr A' ),
-					array( 'endorser_id' => '', 'user' => 'u2', 'name' => 'No id' ), // dropped.
+					array(
+						'endorser_id' => 'e1',
+						'user'        => 'u1',
+						'name'        => 'Dr A',
+					),
+					array(
+						'endorser_id' => '',
+						'user'        => 'u2',
+						'name'        => 'No id',
+					), // dropped.
 				),
 			)
 		);
@@ -71,16 +79,16 @@ final class SettingsAndPayloadTest extends TestCase {
 		$body = $builder->build(
 			42,
 			array(
-				'certificate_email_template' => 'email-1',
-				'class_name'                 => '',            // -> course title fallback.
-				'started_date'               => '',           // -> today.
-				'instructors'                => array( 'Teacher A' ), // avoids DB lookup.
-				'tags'                       => array( 'x' ),
+				'certificate_email_template'  => 'email-1',
+				'class_name'                  => '',            // -> course title fallback.
+				'started_date'                => '',           // -> today.
+				'instructors'                 => array( 'Teacher A' ), // avoids DB lookup.
+				'tags'                        => array( 'x' ),
 				'allow_duplicate_participant' => 'not_allowed',
-				'auto_send_mail_participant' => 'auto',
-				'endorse_method'             => 'auto',
-				'template_id'                => 'tmpl-1',
-				'template_group'             => 'participant',
+				'auto_send_mail_participant'  => 'auto',
+				'endorse_method'              => 'auto',
+				'template_id'                 => 'tmpl-1',
+				'template_group'              => 'participant',
 			)
 		);
 

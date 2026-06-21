@@ -36,13 +36,13 @@ final class My_Certificates_Shortcode {
 			return '<p>' . esc_html__( 'Please log in to view your certificates.', 'certpsu-connector' ) . '</p>';
 		}
 
-		$user_id = get_current_user_id();
+		$user_id           = get_current_user_id();
 		$core_certificates = certpsu()->container()->get( 'certificates' )->get_by_wp_user_id( $user_id );
 
 		// Format core certificates.
 		$formatted_certs = array();
 		foreach ( $core_certificates as $cert ) {
-			$class_payload = Json::decode( (string) $cert['class_payload_json'] );
+			$class_payload     = Json::decode( (string) $cert['class_payload_json'] );
 			$formatted_certs[] = array(
 				'id'              => $cert['certpsu_certificate_id'],
 				'title'           => $class_payload['title'] ?? esc_html__( 'Unknown Certificate', 'certpsu-connector' ),
@@ -54,7 +54,7 @@ final class My_Certificates_Shortcode {
 
 		/**
 		 * Filter the list of certificates displayed to the user.
-		 * 
+		 *
 		 * Plugins like TutorLMS can hook into this to inject their own certificates.
 		 * Structure per item:
 		 * [
@@ -71,9 +71,12 @@ final class My_Certificates_Shortcode {
 		$all_certs = apply_filters( 'certpsu_my_certificates_data', $formatted_certs, $user_id );
 
 		// Sort by issued_at DESC.
-		usort( $all_certs, function( $a, $b ) {
-			return strtotime( $b['issued_at'] ) <=> strtotime( $a['issued_at'] );
-		});
+		usort(
+			$all_certs,
+			function ( $a, $b ) {
+				return strtotime( $b['issued_at'] ) <=> strtotime( $a['issued_at'] );
+			}
+		);
 
 		return Template::load( 'my-certificates.php', array( 'certificates' => $all_certs ) );
 	}

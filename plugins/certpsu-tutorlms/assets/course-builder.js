@@ -15,13 +15,14 @@
 			return;
 		}
 
-		var add = Tutor.CourseBuilder.Additional.registerField.bind( Tutor.CourseBuilder.Additional );
-		var cb = window.CertPSUCourseBuilder || {};
+		var add    = Tutor.CourseBuilder.Additional.registerField.bind( Tutor.CourseBuilder.Additional );
+		var cb     = window.CertPSUCourseBuilder || {};
 		var groups = cb.groups || [];
-		var slot = 'after_certificates';
+		var slot   = 'after_certificates';
 
 		var priority = 10;
-		function nextPrio() { priority += 10; return priority; }
+		function nextPrio() {
+			priority += 10; return priority; }
 
 		// Render a dropdown when the connector supplied options, else a plain text input.
 		function withBlank( opts ) {
@@ -51,12 +52,12 @@
 		add( slot, { name: 'certpsu_class_name', type: 'text', label: 'Class name', placeholder: 'Leave blank to use course title', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_printed_name', type: 'textarea', label: 'Printed name', placeholder: 'Leave blank to use course title', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_description', type: 'textarea', label: 'Description', priority: nextPrio() } );
-		
+
 		add( slot, { name: 'certpsu_started_date', type: 'text', label: 'Started date (YYYY-MM-DD)', placeholder: 'Leave blank to use course creation date', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_ended_date', type: 'text', label: 'Ended date (YYYY-MM-DD)', placeholder: 'Leave blank to use course creation date', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_issued_date', type: 'text', label: 'Issued date (YYYY-MM-DD)', placeholder: 'Leave blank to use course creation date', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_class_date_text', type: 'text', label: 'Class date text', priority: nextPrio() } );
-		
+
 		add( slot, { name: 'certpsu_instructors', type: 'textarea', label: 'Instructors (One per line)', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_tags', type: 'textarea', label: 'Tags (One per line)', priority: nextPrio() } );
 
@@ -77,64 +78,73 @@
 
 	// Hack: Tutor LMS Course Builder (React) doesn't support a native "group/card" field type.
 	// We use a MutationObserver/Interval to find our fields and style their containers to look like a card.
-	var style = document.createElement('style');
+	var style       = document.createElement( 'style' );
 	style.innerHTML = `
-		.certpsu-cb-row {
-			background-color: #FFFFFF;
+		.certpsu - cb - row {
+			background - color: #FFFFFF;
 			padding: 24px 32px;
-			border-left: 1px solid #E1E6EB;
-			border-right: 1px solid #E1E6EB;
-			border-bottom: 1px solid #E1E6EB;
-			margin-bottom: 0 !important;
-		}
-		.certpsu-cb-first {
-			border-top: 1px solid #E1E6EB;
-			border-radius: 6px 6px 0 0;
-			margin-top: 24px !important;
+			border - left: 1px solid #E1E6EB;
+			border - right: 1px solid #E1E6EB;
+			border - bottom: 1px solid #E1E6EB;
+			margin - bottom: 0 ! important;
+	}
+		.certpsu - cb - first {
+			border - top: 1px solid #E1E6EB;
+			border - radius: 6px 6px 0 0;
+			margin - top: 24px ! important;
 			position: relative;
-		}
-		.certpsu-cb-first::before {
+	}
+		.certpsu - cb - first::before {
 			content: "CertPSU Certificate Settings";
 			display: block;
-			font-size: 16px;
-			font-weight: 500;
+			font - size: 16px;
+			font - weight: 500;
 			color: #212327;
-			margin-bottom: 16px;
-			padding-bottom: 16px;
-			border-bottom: 1px solid #E1E6EB;
-		}
-		.certpsu-cb-last {
-			border-radius: 0 0 6px 6px;
-			margin-bottom: 24px !important;
-		}
+			margin - bottom: 16px;
+			padding - bottom: 16px;
+			border - bottom: 1px solid #E1E6EB;
+	}
+		.certpsu - cb - last {
+			border - radius: 0 0 6px 6px;
+			margin - bottom: 24px ! important;
+	}
 	`;
-	document.head.appendChild(style);
+	document.head.appendChild( style );
 
-	setInterval(function() {
-		var fields = document.querySelectorAll('[name^="certpsu_"]');
-		if (fields.length === 0) return;
-
-		var rows = [];
-		fields.forEach(function(field) {
-			// Find the closest wrapper that is a sibling to other rows (usually a div wrapping the label and input)
-			var row = field.closest('.tutor-field-wrapper, .tutor-field, .tutor-form-row') || field.parentNode;
-			if (row && rows.indexOf(row) === -1) {
-				rows.push(row);
+	setInterval(
+		function () {
+			var fields = document.querySelectorAll( '[name^="certpsu_"]' );
+			if (fields.length === 0) {
+				return;
 			}
-		});
 
-		if (rows.length > 0) {
-			rows.forEach(function(row, index) {
-				if (!row.classList.contains('certpsu-cb-row')) {
-					row.classList.add('certpsu-cb-row');
+			var rows = [];
+			fields.forEach(
+				function (field) {
+					// Find the closest wrapper that is a sibling to other rows (usually a div wrapping the label and input)
+					var row = field.closest( '.tutor-field-wrapper, .tutor-field, .tutor-form-row' ) || field.parentNode;
+					if (row && rows.indexOf( row ) === -1) {
+						rows.push( row );
+					}
 				}
-				if (index === 0 && !row.classList.contains('certpsu-cb-first')) {
-					row.classList.add('certpsu-cb-first');
-				}
-				if (index === rows.length - 1 && !row.classList.contains('certpsu-cb-last')) {
-					row.classList.add('certpsu-cb-last');
-				}
-			});
-		}
-	}, 1000);
+			);
+
+			if (rows.length > 0) {
+				rows.forEach(
+					function (row, index) {
+						if ( ! row.classList.contains( 'certpsu-cb-row' )) {
+							row.classList.add( 'certpsu-cb-row' );
+						}
+						if (index === 0 && ! row.classList.contains( 'certpsu-cb-first' )) {
+							row.classList.add( 'certpsu-cb-first' );
+						}
+						if (index === rows.length - 1 && ! row.classList.contains( 'certpsu-cb-last' )) {
+							row.classList.add( 'certpsu-cb-last' );
+						}
+					}
+				);
+			}
+		},
+		1000
+	);
 } )();

@@ -30,7 +30,7 @@ final class Page_Installer {
 	 */
 	private function create_my_certificates_page(): void {
 		$page_slug = 'my-certificate';
-		
+
 		// Check if page already exists by slug.
 		$existing_page = get_page_by_path( $page_slug );
 		if ( $existing_page ) {

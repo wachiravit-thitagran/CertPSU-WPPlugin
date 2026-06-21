@@ -90,7 +90,7 @@ final class Course_Settings {
 			'connection'  => array(
 				'title'  => 'CertPSU connection',
 				'fields' => array(
-					'certificate_email_template'                   => array(
+					'certificate_email_template' => array(
 						'label'          => 'Certificate email template',
 						'type'           => 'text',
 						'options_source' => 'email_template:participant',
@@ -102,7 +102,7 @@ final class Course_Settings {
 						'options_source' => 'email_template:endorser_required_endorsement',
 						'help'           => 'Select from the organization email templates. Falls back to manual id entry when the API is unavailable.',
 					),
-					'endorser_without_endorsement_email_template'  => array(
+					'endorser_without_endorsement_email_template' => array(
 						'label'          => 'Endorser (without endorsement) email template',
 						'type'           => 'text',
 						'options_source' => 'email_template:endorser_without_endorsement',

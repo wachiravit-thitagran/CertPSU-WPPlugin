@@ -27,16 +27,34 @@ final class Class_Payload_Builder {
 		$course_post = get_post( $course_id );
 		$timestamp   = $course_post ? strtotime( $course_post->post_date ) : current_time( 'timestamp' );
 		$today       = gmdate( 'Y-m-d', $timestamp );
-		
-		$thai_months = array(
-			1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
-			5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม',
-			9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม',
+
+		$thai_months       = array(
+			1  => 'มกราคม',
+			2  => 'กุมภาพันธ์',
+			3  => 'มีนาคม',
+			4  => 'เมษายน',
+			5  => 'พฤษภาคม',
+			6  => 'มิถุนายน',
+			7  => 'กรกฎาคม',
+			8  => 'สิงหาคม',
+			9  => 'กันยายน',
+			10 => 'ตุลาคม',
+			11 => 'พฤศจิกายน',
+			12 => 'ธันวาคม',
 		);
 		$thai_months_short = array(
-			1 => 'ม.ค.', 2 => 'ก.พ.', 3 => 'มี.ค.', 4 => 'เม.ย.',
-			5 => 'พ.ค.', 6 => 'มิ.ย.', 7 => 'ก.ค.', 8 => 'ส.ค.',
-			9 => 'ก.ย.', 10 => 'ต.ค.', 11 => 'พ.ย.', 12 => 'ธ.ค.',
+			1  => 'ม.ค.',
+			2  => 'ก.พ.',
+			3  => 'มี.ค.',
+			4  => 'เม.ย.',
+			5  => 'พ.ค.',
+			6  => 'มิ.ย.',
+			7  => 'ก.ค.',
+			8  => 'ส.ค.',
+			9  => 'ก.ย.',
+			10 => 'ต.ค.',
+			11 => 'พ.ย.',
+			12 => 'ธ.ค.',
 		);
 
 		$month_num = (int) gmdate( 'n', $timestamp );
@@ -58,7 +76,7 @@ final class Class_Payload_Builder {
 		// Evaluate name and printed_name with base context.
 		$raw_name         = (string) ( $settings['class_name'] ?? '' );
 		$raw_printed_name = (string) ( $settings['printed_name'] ?? '' );
-		
+
 		$name         = $this->first_non_empty( certpsu()->replacer()->replace( $raw_name, $context ), $title );
 		$printed_name = $this->first_non_empty( certpsu()->replacer()->replace( $raw_printed_name, $context ), $title );
 

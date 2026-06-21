@@ -63,7 +63,7 @@ final class Remote_Options {
 						'status' => 'active',
 					)
 				);
-				$out = array();
+				$out      = array();
 				foreach ( self::items( $response ) as $item ) {
 					$id = self::str( $item['id'] ?? '' );
 					if ( '' === $id ) {
@@ -97,7 +97,7 @@ final class Remote_Options {
 			'email_templates',
 			static function (): array {
 				$response = certpsu()->api()->list_email_templates( array( 'size' => self::MAX ) );
-				$out = array();
+				$out      = array();
 				foreach ( self::items( $response ) as $item ) {
 					$id   = self::str( $item['id'] ?? '' );
 					$type = self::str( $item['type'] ?? '' );
@@ -127,7 +127,7 @@ final class Remote_Options {
 						'status' => 'active',
 					)
 				);
-				$out = array();
+				$out      = array();
 				foreach ( self::items( $response ) as $item ) {
 					$user = is_array( $item['user'] ?? null ) ? $item['user'] : array();
 					$uid  = self::str( $user['id'] ?? '' );
