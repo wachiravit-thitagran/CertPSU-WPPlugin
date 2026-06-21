@@ -136,6 +136,41 @@ jobs:
         # The key is that the execution does not throw a PHP Fatal Error.
         wp action-scheduler run --allow-root || true
         
+    - name: Smoke Test - Shortcode Render
+      run: |
+        cd /tmp/wordpress
+        
+        # Test rendering the shortcode to ensure no fatal errors when the frontend tries to display certificates
+        wp eval '
+        $output = do_shortcode("[certpsu_my_certificates]");
+        if (strpos($output, "certpsu") !== false || strpos($output, "div") !== false || $output === "") {
+          echo "Shortcode rendered successfully.";
+        } else {
+          echo "Shortcode render failed or returned unexpected output.";
+        }
+        ' --allow-root
+        
+    - name: Smoke Test - Settings Update
+      run: |
+        cd /tmp/wordpress
+        
+        # Test updating global settings to verify no errors occur on save
+        wp eval "
+        \$settings = [
+          'client_id' => 'test_client',
+          'client_secret' => 'test_secret',
+          'environment' => 'sandbox'
+        ];
+        update_option('certpsu_connector_settings', \$settings);
+        \$saved = get_option('certpsu_connector_settings');
+        if ( empty(\$saved['client_id']) ) {
+          echo 'Settings failed to save.';
+          exit(1);
+        } else {
+          echo 'Settings saved successfully.';
+        }
+        " --allow-root
+        
     - name: Lifecycle Test - Deactivate & Reactivate
       run: |
         cd /tmp/wordpress
