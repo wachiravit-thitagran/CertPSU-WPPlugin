@@ -97,3 +97,31 @@ jobs:
         
         # Run a simple WP evaluation to ensure no fatal errors have broken the site
         wp eval 'echo "WordPress loads successfully!";' --allow-root
+
+    - name: Smoke Test - Course Completion
+      run: |
+        cd /tmp/wordpress
+        
+        # 1. Create a test student
+        USER_ID=$(wp user create teststudent test@example.com --role=subscriber --porcelain --allow-root)
+        echo "Created User ID: $USER_ID"
+        
+        # 2. Create a test course
+        COURSE_ID=$(wp post create --post_type=courses --post_title="Test Course" --post_status=publish --porcelain --allow-root)
+        echo "Created Course ID: $COURSE_ID"
+        
+        # 3. Enable CertPSU for this course
+        wp eval "update_post_meta($COURSE_ID, '_certpsu_course_settings', ['enabled' => true]);" --allow-root
+        
+        # 4. Trigger the course completion hook
+        wp eval "do_action('tutor_course_complete_after', $COURSE_ID, $USER_ID);" --allow-root
+        
+        # 5. Verify the issuance job was queued in Action Scheduler
+        wp eval "
+        if ( ! as_has_scheduled_action('certpsu_tutorlms_issue') ) {
+          echo 'Error: Certificate issuance job (certpsu_tutorlms_issue) was NOT queued!';
+          exit(1);
+        } else {
+          echo 'Success: Certificate issuance job was queued successfully.';
+        }
+        " --allow-root
