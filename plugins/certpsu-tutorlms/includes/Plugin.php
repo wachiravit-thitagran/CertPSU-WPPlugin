@@ -33,6 +33,9 @@ final class Plugin {
 		// Async job: ensure class, add participant, release certificate on-the-fly.
 		( new Completion_Handler() )->register();
 
+		// Background sync: poll CertPSU API for release status and update certificate URLs.
+		( new \CertPSU\TutorLMS\Issuance\Release_Sync_Handler() )->register();
+
 		// Tutor LMS React course builder fields (save may run via REST, so this
 		// is registered unconditionally).
 		( new Tutor_Course_Builder() )->register();

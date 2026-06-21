@@ -94,6 +94,16 @@ final class CertPSU_Api_Client {
 	}
 
 	/**
+	 * Get class release status (all participants).
+	 *
+	 * @param string $class_id Class ID.
+	 * @return Api_Response
+	 */
+	public function get_class_release( string $class_id ): Api_Response {
+		return $this->request( 'GET', "/v2/classes/{$class_id}/release", array(), null );
+	}
+
+	/**
 	 * Get participants.
 	 *
 	 * @param string $class_id ID.
