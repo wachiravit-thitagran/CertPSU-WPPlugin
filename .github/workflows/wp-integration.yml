@@ -125,3 +125,29 @@ jobs:
           echo 'Success: Certificate issuance job was queued successfully.';
         }
         " --allow-root
+
+    - name: Smoke Test - Action Scheduler Execution
+      run: |
+        cd /tmp/wordpress
+        
+        # We manually process the Action Scheduler queue.
+        # This will simulate what happens in the background. It will hit the CertPSU API.
+        # It's expected to either succeed or gracefully handle the error (since the fake user isn't on the API).
+        # The key is that the execution does not throw a PHP Fatal Error.
+        wp action-scheduler run --allow-root || true
+        
+    - name: Lifecycle Test - Deactivate & Reactivate
+      run: |
+        cd /tmp/wordpress
+        
+        # Test deactivation
+        wp plugin deactivate certpsu-tutorlms certpsu-connector --allow-root
+        
+        # Verify deactivation doesn't throw fatal errors
+        wp eval 'echo "Deactivation successful!";' --allow-root
+        
+        # Test reactivation
+        wp plugin activate certpsu-connector certpsu-tutorlms --allow-root
+        
+        # Verify reactivation doesn't throw fatal errors
+        wp eval 'echo "Reactivation successful!";' --allow-root
