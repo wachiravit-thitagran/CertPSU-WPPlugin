@@ -90,7 +90,7 @@ final class Class_Payload_Builder {
 			'certificate_email_template'                   => (string) ( $settings['certificate_email_template'] ?? '' ),
 			'endorser_required_endorsement_email_template' => (string) ( $settings['endorser_required_endorsement_email_template'] ?? '' ),
 			'endorser_without_endorsement_email_template'  => (string) ( $settings['endorser_without_endorsement_email_template'] ?? '' ),
-			'class_'                                       => $class,
+			'class'                                        => $class,
 		);
 
 		$template = $this->build_template( $settings, $title );
