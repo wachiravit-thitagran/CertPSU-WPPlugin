@@ -160,16 +160,16 @@ final class Completion_Handler {
 	/**
 	 * Extract the participant id from an add_participants response.
 	 *
-	 * We send exactly one participant, and v2 returns it (with its id) in
-	 * `data.participants`, so the first entry's id is the one we want.
+	 * We send exactly one participant, and v2 returns the created participants
+	 * directly in the unwrapped `data` array (or in `participants` if v1/compat).
 	 *
-	 * @param array<string,mixed>|null $data Unwrapped response data ({ participants: [...] }).
+	 * @param array<string,mixed>|array<int,mixed>|null $data Unwrapped response data.
 	 * @return string Participant id, or '' if absent.
 	 */
 	private function extract_participant_id( ?array $data ): string {
 		$participants = is_array( $data ) && isset( $data['participants'] ) && is_array( $data['participants'] )
 			? $data['participants']
-			: array();
+			: ( is_array( $data ) ? $data : array() );
 
 		foreach ( $participants as $p ) {
 			if ( is_array( $p ) && ! empty( $p['id'] ) ) {
