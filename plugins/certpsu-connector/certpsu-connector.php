@@ -70,6 +70,8 @@ Bootstrap::init();
  *
  * @return Plugin
  */
-function certpsu(): Plugin {
-	return Bootstrap::plugin();
+if ( ! function_exists( 'certpsu' ) ) {
+	function certpsu(): Plugin {
+		return Bootstrap::plugin();
+	}
 }
