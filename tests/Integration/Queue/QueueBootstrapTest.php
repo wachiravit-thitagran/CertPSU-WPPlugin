@@ -19,6 +19,9 @@ final class QueueBootstrapTest extends TestCase {
 	/**
 	 * Ensure queue loads and resolves.
 	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 *
 	 * @return void
 	 */
 	public function test_queue_resolves(): void {

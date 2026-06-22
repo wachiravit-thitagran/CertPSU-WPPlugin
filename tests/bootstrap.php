@@ -15,6 +15,56 @@ if ( ! defined( 'ABSPATH' ) ) {
 	define( 'ABSPATH', __DIR__ . '/' );
 }
 
+if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
+	define( 'MINUTE_IN_SECONDS', 60 );
+}
+
+class WPDieException extends \Exception {}
+
+if ( ! function_exists( 'certpsu' ) ) {
+	class Mock_CertPSU {
+		public function api() {
+			return $GLOBALS['mock_certpsu_api'] ?? new class {};
+		}
+		public function container() {
+			return $GLOBALS['mock_certpsu_container'] ?? new class {
+				public function get($key) {
+					if ($key === 'queue') {
+						return new class extends \CertPSU\Connector\Queue\Queue {
+							public function __construct() {}
+							public function resolve() {}
+						};
+					}
+					if ($key === 'process_issuance_workflow_service') {
+						return new class {
+							public function handle($id) { return 1; }
+						};
+					}
+					return null;
+				}
+			};
+		}
+		public function create_issuance( $payload = null ) {
+			if ( $payload && isset( $payload['idempotency_mode'] ) && 'fail_if_exists' === $payload['idempotency_mode'] ) {
+				return new \WP_Error( 'certpsu_issuance_exists', 'Exists' );
+			}
+			return 1;
+		}
+		public function get_issuance( $id = null ) {
+			return array( 'id' => $id, 'class_id' => 'class_123', 'status' => 'released' );
+		}
+		public function replacer() {
+			return new class {
+				public function replace($text, $context) { return $text; }
+				public function replace_recursive($body, $context) { return $body; }
+			};
+		}
+	}
+	function certpsu() {
+		return new Mock_CertPSU();
+	}
+}
+
 class Mock_WPDB {
 	public $prefix = 'wp_';
 	public $insert_id = 1;
@@ -34,6 +84,12 @@ class Mock_WPDB {
 	}
 }
 $GLOBALS['wpdb'] = new Mock_WPDB();
+
+if ( ! function_exists( 'check_admin_referer' ) ) {
+	function check_admin_referer( $action = -1, $query_arg = '_wpnonce' ) {
+		return 1;
+	}
+}
 
 if ( ! function_exists( 'plugin_dir_path' ) ) {
 	/**
@@ -212,6 +268,12 @@ if ( ! function_exists( 'as_schedule_single_action' ) ) {
 	}
 }
 
+if ( ! class_exists( 'ActionScheduler' ) ) {
+	class ActionScheduler {
+		public static function is_initialized() { return true; }
+	}
+}
+
 if ( ! function_exists( 'get_user_meta' ) ) {
 	function get_user_meta( $user_id, $key = '', $single = false ) {
 		if ( isset( $GLOBALS['mock_user_meta'][$user_id][$key] ) ) {
@@ -234,14 +296,35 @@ if ( ! function_exists( 'add_action' ) ) {
 	}
 }
 
-if ( ! function_exists( 'certpsu' ) ) {
-	class Mock_CertPSU {
-		public function api() {
-			return $GLOBALS['mock_certpsu_api'];
-		}
+
+
+if ( ! function_exists( 'add_shortcode' ) ) {
+	function add_shortcode( $tag, $func ) {
+		$GLOBALS['mock_shortcodes'][$tag] = $func;
 	}
-	function certpsu() {
-		return new Mock_CertPSU();
+}
+
+if ( ! function_exists( 'wp_set_current_user' ) ) {
+	function wp_set_current_user( $id ) {
+		$GLOBALS['mock_current_user_id'] = $id;
+	}
+}
+
+if ( ! function_exists( 'wp_rand' ) ) {
+	function wp_rand( $min = 0, $max = 0 ) {
+		return $min;
+	}
+}
+
+if ( ! function_exists( 'get_post' ) ) {
+	function get_post( $post = null ) {
+		$post_id = is_object($post) ? $post->ID : (is_array($post) ? $post['ID'] : $post);
+		if ( ! $post_id ) return null;
+		$p = new stdClass();
+		$p->ID = $post_id;
+		$p->post_title = get_the_title($post_id);
+		$p->post_date = current_time('mysql');
+		return $p;
 	}
 }
 
@@ -316,7 +399,10 @@ if ( ! function_exists( 'wp_verify_nonce' ) ) {
 }
 
 if ( ! function_exists( 'current_user_can' ) ) {
-	function current_user_can() {
+	function current_user_can( $cap = '' ) {
+		if ( $cap === 'manage_options' && ($GLOBALS['mock_current_user_id'] ?? 1) === 2 ) {
+			return false;
+		}
 		return true;
 	}
 }
@@ -400,5 +486,17 @@ if ( ! function_exists( 'add_query_arg' ) ) {
 		}
 		// Minimal mock
 		return $uri . ( strpos( $uri, '?' ) === false ? '?' : '&' ) . http_build_query( is_array( $args[0] ) ? $args[0] : array( $args[0] => $args[1] ) );
+	}
+}
+
+if ( ! function_exists( 'wp_die' ) ) {
+	function wp_die( $message = '', $title = '', $args = array() ) {
+		throw new WPDieException( $message );
+	}
+}
+
+if ( ! function_exists( 'sanitize_key' ) ) {
+	function sanitize_key( $key ) {
+		return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( $key ) );
 	}
 }

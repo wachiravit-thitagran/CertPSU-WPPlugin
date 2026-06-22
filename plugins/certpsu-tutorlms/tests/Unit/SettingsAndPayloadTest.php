@@ -45,7 +45,7 @@ final class SettingsAndPayloadTest extends TestCase {
 				'template_group'              => 'winner',
 				'endorsers'                   => array(
 					array(
-						'endorser_id' => 'e1',
+						'endorser_id' => 'endorser_1',
 						'user'        => 'u1',
 						'name'        => 'Dr A',
 					),
@@ -64,7 +64,7 @@ final class SettingsAndPayloadTest extends TestCase {
 		self::assertSame( array( 'a', 'b', 'c' ), $clean['tags'] );
 		self::assertSame( 'winner', $clean['template_group'] );
 		self::assertCount( 1, $clean['endorsers'] );
-		self::assertSame( 'e1', $clean['endorsers'][0]['endorser_id'] );
+		self::assertSame( 'endorser_1', $clean['endorsers'][0]['endorser_id'] );
 		self::assertSame( 'required', $clean['endorsers'][0]['endorse_requirement'] );
 	}
 
@@ -93,9 +93,9 @@ final class SettingsAndPayloadTest extends TestCase {
 		);
 
 		self::assertSame( 'email-1', $body['certificate_email_template'] );
-		self::assertSame( 'Course 42', $body['class_']['name'] );
-		self::assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}$/', $body['class_']['started_date'] );
-		self::assertSame( array( 'Teacher A' ), $body['class_']['instructors'] );
+		self::assertSame( 'Course 42', $body['class']['name'] );
+		self::assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}$/', $body['class']['started_date'] );
+		self::assertSame( array( 'Teacher A' ), $body['class']['instructors'] );
 		self::assertArrayHasKey( 'certificate_templates', $body );
 		self::assertSame( 'tmpl-1', $body['certificate_templates'][0]['template'] );
 		self::assertSame( 'Course 42', $body['certificate_templates'][0]['name'] );

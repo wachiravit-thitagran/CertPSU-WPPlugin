@@ -31,7 +31,7 @@ final class AdminActionsTest extends TestCase {
 	 * @return void
 	 */
 	public function test_release_action_requires_manage_options_and_nonce(): void {
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) ); // @phpstan-ignore-line
+		wp_set_current_user( 2 ); // @phpstan-ignore-line
 
 		$_GET['page']        = 'certpsu-connector-issuances';
 		$_GET['action']      = 'release';
