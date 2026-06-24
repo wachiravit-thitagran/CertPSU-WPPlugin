@@ -181,7 +181,7 @@ final class Tutor_Course_Builder {
 			array(
 				'groups'               => $groups,
 				'certificateTemplates' => $this->to_js_options( Remote_Options::certificate_templates() ),
-				'emailParticipant'     => $this->to_js_options( Remote_Options::email_templates( 'participant' ) ),
+				'emailCertificate'     => $this->to_js_options( Remote_Options::email_templates( 'certificate' ) ),
 				'emailRequired'        => $this->to_js_options( Remote_Options::email_templates( 'endorser_required_endorsement' ) ),
 				'emailWithout'         => $this->to_js_options( Remote_Options::email_templates( 'endorser_without_endorsement' ) ),
 			)

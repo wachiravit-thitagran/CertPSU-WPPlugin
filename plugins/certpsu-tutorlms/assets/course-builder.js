@@ -45,7 +45,7 @@
 		add( slot, { name: 'certpsu_template_group', type: 'select', label: 'CertPSU certificate group', options: groups, priority: nextPrio() } );
 		add( slot, { name: 'certpsu_remark', type: 'text', label: 'CertPSU remark', priority: nextPrio() } );
 
-		add( slot, selectOrText( { name: 'certpsu_certificate_email_template', label: 'CertPSU certificate email template', placeholder: 'email template id', priority: nextPrio() }, cb.emailParticipant ) );
+		add( slot, selectOrText( { name: 'certpsu_certificate_email_template', label: 'CertPSU certificate email template', placeholder: 'email template id', priority: nextPrio() }, cb.emailCertificate ) );
 		add( slot, selectOrText( { name: 'certpsu_endorser_required_endorsement_email_template', label: 'Endorser (required) email template', placeholder: 'email template id', priority: nextPrio() }, cb.emailRequired ) );
 		add( slot, selectOrText( { name: 'certpsu_endorser_without_endorsement_email_template', label: 'Endorser (without endorsement) email template', placeholder: 'email template id', priority: nextPrio() }, cb.emailWithout ) );
 

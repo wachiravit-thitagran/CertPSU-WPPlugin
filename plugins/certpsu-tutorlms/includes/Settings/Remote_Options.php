@@ -32,7 +32,7 @@ final class Remote_Options {
 	/**
 	 * Resolve a schema field's `options_source` to an [id => label] map.
 	 *
-	 * @param string $source Source token (e.g. "certificate_template", "email_template:participant", "endorser").
+	 * @param string $source Source token (e.g. "certificate_template", "email_template:certificate", "endorser").
 	 * @return array<string,string>
 	 */
 	public static function for_source( string $source ): array {
