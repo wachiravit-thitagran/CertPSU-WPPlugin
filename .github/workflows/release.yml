@@ -1,31 +1,68 @@
-name: Build & Release
+name: Release
 
-# Build the plugin zips and publish a GitHub Release automatically on every push
-# to the default branch. The release version is taken from the core plugin's
-# `Version:` header:
+# Auto-release on every push to main. The dev workflow is: edit code, push.
+# This job computes the next version, stamps it into both plugins,
+# builds the zips, and publishes a GitHub Release.
 #
-#   - bump the Version header, push -> a new release `v<version>` is created
-#     with the zips attached.
-#   - push again without bumping -> the existing release's assets are refreshed.
-#
-# You can also run it manually from the Actions tab (workflow_dispatch).
+# Versioning: the PATCH number is auto-bumped from the latest git tag. To release
+# a new MAJOR/MINOR, bump the Version header in
+# plugins/certpsu-connector/certpsu-connector.php manually and push.
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/**'
   workflow_dispatch:
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 permissions:
-  contents: write  # required to create the Release and upload assets
+  contents: write
 
 jobs:
-  build:
+  release:
+    if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next version
+        id: ver
+        run: |
+          set -euo pipefail
+          current=$(grep -iE '^[[:space:]]*\*?[[:space:]]*Version:' plugins/certpsu-connector/certpsu-connector.php | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+          latest_tag=$(git tag --list 'v*' --sort=-v:refname | grep -oE '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 | sed 's/^v//' || true)
+          echo "header=${current:-none}  latest_tag=${latest_tag:-none}"
+
+          if [ -z "${latest_tag}" ]; then
+            next="${current:-0.1.0}"
+          else
+            higher=$(printf '%s\n%s\n' "$current" "$latest_tag" | sort -V | tail -1)
+            if [ -n "$current" ] && [ "$higher" = "$current" ] && [ "$current" != "$latest_tag" ]; then
+              next="$current"
+            else
+              IFS=. read -r MA MI PA <<< "$latest_tag"
+              next="${MA}.${MI}.$((PA + 1))"
+            fi
+          fi
+
+          if ! printf '%s' "$next" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Computed version '$next' is not valid semver; aborting." >&2
+            exit 1
+          fi
+
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+          echo "tag=v$next" >> "$GITHUB_OUTPUT"
+          echo "Next version: $next (tag v$next)"
 
       - name: Set up PHP & Composer
         uses: shivammathur/setup-php@v2
@@ -36,17 +73,20 @@ jobs:
       - name: Install runtime dependencies (Action Scheduler)
         run: composer install --no-dev --prefer-dist --no-interaction --no-progress
 
+      - name: Stamp version into both plugins
+        env:
+          NEXT: ${{ steps.ver.outputs.next }}
+        run: |
+          set -euo pipefail
+          # Plugin headers.
+          sed -i -E "s/^([[:space:]]*\*[[:space:]]*Version:[[:space:]]*).*/\1${NEXT}/" plugins/certpsu-connector/certpsu-connector.php
+          sed -i -E "s/^([[:space:]]*\*[[:space:]]*Version:[[:space:]]*).*/\1${NEXT}/" plugins/certpsu-tutorlms/certpsu-tutorlms.php
+          # Version constants.
+          sed -i -E "s/(CERTPSU_CONNECTOR_VERSION', ')[0-9.]+(')/\1${NEXT}\2/" plugins/certpsu-connector/certpsu-connector.php
+          sed -i -E "s/(CERTPSU_TUTORLMS_VERSION', ')[0-9.]+(')/\1${NEXT}\2/" plugins/certpsu-tutorlms/certpsu-tutorlms.php
+
       - name: Build plugin zips
         run: bin/build.sh
-
-      - name: Determine release version
-        id: version
-        run: |
-          version="$(grep -iE '^\s*\*?\s*Version:' plugins/certpsu-connector/certpsu-connector.php \
-            | head -n1 \
-            | sed -E 's/.*[Vv]ersion:[[:space:]]*([0-9A-Za-z._-]+).*/\1/')"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-          echo "Release version: v${version}"
 
       - name: List artifacts
         run: ls -lh dist/
@@ -58,18 +98,13 @@ jobs:
           path: dist/*.zip
           if-no-files-found: error
 
-      - name: Publish to GitHub Release
+      - name: Publish GitHub Release with assets
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: v${{ steps.version.outputs.version }}
+          TAG: ${{ steps.ver.outputs.tag }}
         run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG exists — refreshing assets."
-            gh release upload "$TAG" dist/*.zip --clobber
-          else
-            echo "Creating release $TAG at ${GITHUB_SHA}."
-            gh release create "$TAG" dist/*.zip \
-              --target "${GITHUB_SHA}" \
-              --title "$TAG" \
-              --generate-notes
-          fi
+          set -euo pipefail
+          gh release create "$TAG" dist/*.zip \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --generate-notes
