@@ -54,6 +54,7 @@ final class Settings_Page {
 			'<input type="url" id="certpsu_api_base_url" name="api_base_url" value="%s" class="regular-text" placeholder="https://cert.psu.ac.th:8443" />',
 			esc_attr( (string) $settings['api_base_url'] )
 		);
+		echo '&nbsp;<button type="submit" name="test_connection" value="1" class="button button-secondary">' . esc_html__( 'Test Connection', 'certpsu-connector' ) . '</button>';
 		echo '<p class="description">' . esc_html__( 'The endpoint URL to send requests to. Defaults to https://cert.psu.ac.th:8443', 'certpsu-connector' ) . '</p>';
 		echo '</td></tr>';
 
@@ -120,6 +121,21 @@ final class Settings_Page {
 
 		$service->update( $values );
 
-		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'certpsu-connector' ) . '</p></div>';
+		if ( ! empty( $_POST['test_connection'] ) ) {
+			try {
+				/** @var \CertPSU\Connector\CertPSU\CertPSU_Api_Client $api_client */
+				$api_client = certpsu()->container()->get( \CertPSU\Connector\CertPSU\CertPSU_Api_Client::class );
+				$response   = $api_client->list_certificate_templates( array( 'size' => 1 ) );
+				if ( $response->is_success() ) {
+					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Connection test successful! Valid API Key and Base URL.', 'certpsu-connector' ) . '</p></div>';
+				} else {
+					echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( 'Connection test failed: %s', 'certpsu-connector' ), $response->get_error_message() ) ) . '</p></div>';
+				}
+			} catch ( \Throwable $e ) {
+				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( 'Connection test error: %s', 'certpsu-connector' ), $e->getMessage() ) ) . '</p></div>';
+			}
+		} else {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'certpsu-connector' ) . '</p></div>';
+		}
 	}
 }

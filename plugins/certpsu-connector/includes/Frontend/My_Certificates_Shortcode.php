@@ -37,7 +37,7 @@ final class My_Certificates_Shortcode {
 		}
 
 		$user_id           = get_current_user_id();
-		$core_certificates = certpsu()->container()->get( 'certificates' )->get_by_wp_user_id( $user_id );
+		$core_certificates = certpsu()->container()->get( 'certificate_repository' )->get_by_wp_user_id( $user_id );
 
 		// Format core certificates.
 		$formatted_certs = array();
