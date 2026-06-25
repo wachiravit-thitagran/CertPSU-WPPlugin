@@ -26,7 +26,7 @@ final class ContainerKeysTest extends TestCase {
 	public function test_all_expected_keys_are_resolvable(): void {
 		Bootstrap::init();
 
-		$container = certpsu()->container();
+		$container = Bootstrap::plugin()->container();
 
 		$expected_keys = array(
 			'template_replacer',

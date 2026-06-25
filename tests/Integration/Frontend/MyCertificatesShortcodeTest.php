@@ -41,7 +41,7 @@ final class MyCertificatesShortcodeTest extends TestCase {
 	 * @return void
 	 */
 	public function test_render_does_not_throw_fatal_error_when_logged_in(): void {
-		if ( ! function_exists( 'wp_set_current_user' ) ) {
+		if ( ! function_exists( 'wp_insert_user' ) ) {
 			self::markTestSkipped( 'Requires WordPress environment.' );
 		}
 

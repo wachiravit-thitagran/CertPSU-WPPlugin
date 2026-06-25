@@ -17,34 +17,6 @@ require_once $root . '/includes/Settings/Course_Settings.php';
 require_once $root . '/includes/Settings/Remote_Options.php';
 require_once $root . '/includes/Integration/Tutor_Course_Builder.php';
 
-// Mock WordPress functions needed by enqueue().
-if ( ! function_exists( 'wp_enqueue_script' ) ) {
-	function wp_enqueue_script(): void {}
-}
-
-if ( ! function_exists( 'wp_localize_script' ) ) {
-	/**
-	 * @param array<string,mixed> $data
-	 */
-	function wp_localize_script( string $handle, string $name, array $data ): void {
-		if ( ! isset( $GLOBALS['mock_localized_scripts'][ $handle ] ) ) {
-			$GLOBALS['mock_localized_scripts'][ $handle ] = array();
-		}
-		$GLOBALS['mock_localized_scripts'][ $handle ][ $name ] = $data;
-	}
-}
-
-if ( ! function_exists( 'get_transient' ) ) {
-	function get_transient( string $transient ): mixed {
-		return false;
-	}
-}
-
-if ( ! function_exists( 'set_transient' ) ) {
-	function set_transient( string $transient, mixed $value, int $expiration = 0 ): bool {
-		return true;
-	}
-}
 
 /**
  * Tests.
