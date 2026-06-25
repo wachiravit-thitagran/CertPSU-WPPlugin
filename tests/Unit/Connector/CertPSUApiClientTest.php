@@ -86,4 +86,25 @@ class CertPSUApiClientTest extends TestCase {
 		$this->assertCount( 2, $response->data );
 		$this->assertSame( 'part_1', $response->data[0]['id'] );
 	}
+
+	public function test_api_log_is_saved(): void {
+		global $wpdb;
+		
+		$GLOBALS['mock_http_response'] = array(
+			'response' => array( 'code' => 200 ),
+			'body'     => wp_json_encode( array(
+				'data' => array( array( 'id' => 'tpl_1' ) )
+			) )
+		);
+
+		$this->client->list_certificate_templates( array( 'size' => 10 ) );
+
+		$this->assertSame( 'wp_certpsu_api_logs', $wpdb->last_table );
+		$this->assertSame( 'GET', $wpdb->last_data['method'] );
+		$this->assertSame( '/v2/certificate-templates', $wpdb->last_data['endpoint'] );
+		$this->assertSame( 200, $wpdb->last_data['response_status'] );
+		$this->assertSame( 1, $wpdb->last_data['success'] );
+		$this->assertStringContainsString( '10', $wpdb->last_data['request_query_json'] );
+		$this->assertStringContainsString( 'tpl_1', $wpdb->last_data['response_body_json'] );
+	}
 }
