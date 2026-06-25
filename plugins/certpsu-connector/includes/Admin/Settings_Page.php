@@ -126,10 +126,10 @@ final class Settings_Page {
 				/** @var \CertPSU\Connector\CertPSU\CertPSU_Api_Client $api_client */
 				$api_client = certpsu()->container()->get( \CertPSU\Connector\CertPSU\CertPSU_Api_Client::class );
 				$response   = $api_client->list_certificate_templates( array( 'size' => 1 ) );
-				if ( $response->is_success() ) {
+				if ( $response->success ) {
 					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Connection test successful! Valid API Key and Base URL.', 'certpsu-connector' ) . '</p></div>';
 				} else {
-					echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( 'Connection test failed: %s', 'certpsu-connector' ), $response->get_error_message() ) ) . '</p></div>';
+					echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( 'Connection test failed: %s', 'certpsu-connector' ), $response->error_message ) ) . '</p></div>';
 				}
 			} catch ( \Throwable $e ) {
 				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( 'Connection test error: %s', 'certpsu-connector' ), $e->getMessage() ) ) . '</p></div>';

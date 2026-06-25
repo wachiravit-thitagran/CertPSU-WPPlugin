@@ -19,23 +19,31 @@ require_once $root . '/includes/Integration/Tutor_Course_Builder.php';
 
 // Mock WordPress functions needed by enqueue().
 if ( ! function_exists( 'wp_enqueue_script' ) ) {
-	function wp_enqueue_script() {}
+	function wp_enqueue_script(): void {}
 }
 
 if ( ! function_exists( 'wp_localize_script' ) ) {
-	function wp_localize_script( $handle, $name, $data ) {
+	/**
+	 * @param array<string,mixed> $data
+	 */
+	function wp_localize_script( string $handle, string $name, array $data ): void {
+		if ( ! isset( $GLOBALS['mock_localized_scripts'][ $handle ] ) ) {
+			$GLOBALS['mock_localized_scripts'][ $handle ] = array();
+		}
 		$GLOBALS['mock_localized_scripts'][ $handle ][ $name ] = $data;
 	}
 }
 
 if ( ! function_exists( 'get_transient' ) ) {
-	function get_transient() {
+	function get_transient( string $transient ): mixed {
 		return false;
 	}
 }
 
 if ( ! function_exists( 'set_transient' ) ) {
-	function set_transient() {}
+	function set_transient( string $transient, mixed $value, int $expiration = 0 ): bool {
+		return true;
+	}
 }
 
 /**
@@ -55,12 +63,16 @@ final class TutorCourseBuilderTest extends TestCase {
 			define( 'CERTPSU_TUTORLMS_URL', 'http://test/' );
 		}
 
-		$GLOBALS['mock_localized_scripts'] = array();
+		/** @var array<string, array<string, mixed>> $mock_localized_scripts */
+		$mock_localized_scripts = array();
+		$GLOBALS['mock_localized_scripts'] = $mock_localized_scripts;
 
 		$builder = new Tutor_Course_Builder();
 		$builder->enqueue();
 
-		$data = $GLOBALS['mock_localized_scripts']['certpsu-tutorlms-course-builder']['CertPSUCourseBuilder'] ?? array();
+		/** @var array<string, array<string, mixed>> $scripts */
+		$scripts = $GLOBALS['mock_localized_scripts'];
+		$data    = $scripts['certpsu-tutorlms-course-builder']['CertPSUCourseBuilder'] ?? array();
 
 		// The JS builder expects these exact keys to populate the dropdowns.
 		self::assertArrayHasKey( 'emailCertificate', $data, 'Must expose emailCertificate' );
