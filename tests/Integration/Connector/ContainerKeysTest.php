@@ -57,4 +57,22 @@ final class ContainerKeysTest extends TestCase {
 			);
 		}
 	}
+
+	/**
+	 * Test that the api() helper method returns the correctly registered API client instance.
+	 * This prevents regressions where calling `container()->get( ...::class )` directly might fail.
+	 *
+	 * @return void
+	 */
+	public function test_api_helper_returns_correct_instance(): void {
+		Bootstrap::init();
+
+		$api_client = Bootstrap::plugin()->api();
+
+		self::assertInstanceOf(
+			\CertPSU\Connector\CertPSU\CertPSU_Api_Client::class,
+			$api_client,
+			"Plugin::api() did not return an instance of CertPSU_Api_Client."
+		);
+	}
 }
