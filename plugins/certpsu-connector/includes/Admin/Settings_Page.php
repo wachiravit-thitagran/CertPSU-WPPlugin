@@ -123,8 +123,7 @@ final class Settings_Page {
 
 		if ( ! empty( $_POST['test_connection'] ) ) {
 			try {
-				/** @var \CertPSU\Connector\CertPSU\CertPSU_Api_Client $api_client */
-				$api_client = certpsu()->container()->get( \CertPSU\Connector\CertPSU\CertPSU_Api_Client::class );
+				$api_client = certpsu()->api();
 				$response   = $api_client->list_certificate_templates( array( 'size' => 1 ) );
 				if ( $response->success ) {
 					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Connection test successful! Valid API Key and Base URL.', 'certpsu-connector' ) . '</p></div>';
