@@ -101,123 +101,28 @@ jobs:
     - name: Smoke Test - Course Completion
       run: |
         cd /tmp/wordpress
-        
-        # 1. Create a test student
-        USER_ID=$(wp user create teststudent test@example.com --role=subscriber --porcelain --allow-root)
-        echo "Created User ID: $USER_ID"
-        
-        # 2. Create a test course
-        COURSE_ID=$(wp post create --post_type=courses --post_title="Test Course" --post_status=publish --porcelain --allow-root)
-        echo "Created Course ID: $COURSE_ID"
-        
-        # 3. Enable CertPSU for this course
-        wp eval "update_post_meta($COURSE_ID, '_certpsu_course_settings', ['enabled' => true]);" --allow-root
-        
-        # 4. Trigger the course completion hook
-        wp eval "do_action('tutor_course_complete_after', $COURSE_ID, $USER_ID);" --allow-root
-        
-        # 5. Verify the issuance job was queued in Action Scheduler
-        wp eval "
-        if ( ! as_has_scheduled_action('certpsu_tutorlms_issue') ) {
-          echo 'Error: Certificate issuance job (certpsu_tutorlms_issue) was NOT queued!';
-          exit(1);
-        } else {
-          echo 'Success: Certificate issuance job was queued successfully.';
-        }
-        " --allow-root
+        wp eval-file ${{ github.workspace }}/tests/wp-integration-scripts/test-course-completion.php --allow-root
 
     - name: Smoke Test - Action Scheduler Execution
       run: |
         cd /tmp/wordpress
-        
         # We manually process the Action Scheduler queue.
-        # This will simulate what happens in the background. It will hit the CertPSU API.
-        # It's expected to either succeed or gracefully handle the error (since the fake user isn't on the API).
-        # The key is that the execution does not throw a PHP Fatal Error.
         wp action-scheduler run --allow-root || true
         
     - name: Smoke Test - Shortcode Render
       run: |
         cd /tmp/wordpress
-        
-        echo "Testing shortcode when logged out..."
-        wp eval '
-        $output = do_shortcode("[certpsu_my_certificates]");
-        if (strpos($output, "Please log in") !== false || strpos($output, "login") !== false) {
-          echo "Shortcode correctly prompted login when logged out.";
-        } else {
-          echo "Shortcode render failed or returned unexpected output for logged out state. Output: " . $output;
-          exit(1);
-        }
-        ' --allow-root
-        
-        echo "Testing shortcode when logged in..."
-        wp eval '
-        $user_id = wp_insert_user([
-          "user_login" => "shortcodetestuser",
-          "user_pass" => wp_generate_password(),
-          "user_email" => "shortcode@example.com"
-        ]);
-        wp_set_current_user($user_id);
-        try {
-          $output = do_shortcode("[certpsu_my_certificates]");
-          if (strpos($output, "certpsu") !== false || strpos($output, "div") !== false || $output === "") {
-            echo "Shortcode rendered successfully when logged in.";
-          } else {
-            echo "Shortcode render failed or returned unexpected output for logged in state.";
-            exit(1);
-          }
-        } catch (Throwable $e) {
-          echo "Fatal error rendering shortcode: " . $e->getMessage();
-          exit(1);
-        } finally {
-          wp_delete_user($user_id);
-        }
-        ' --allow-root
+        wp eval-file ${{ github.workspace }}/tests/wp-integration-scripts/test-shortcode-render.php --allow-root
         
     - name: Smoke Test - Settings Update
       run: |
         cd /tmp/wordpress
-        
-        # Test updating global settings to verify no errors occur on save
-        wp eval "
-        \$settings = [
-          'client_id' => 'test_client',
-          'client_secret' => 'test_secret',
-          'environment' => 'sandbox'
-        ];
-        update_option('certpsu_connector_settings', \$settings);
-        \$saved = get_option('certpsu_connector_settings');
-        if ( empty(\$saved['client_id']) ) {
-          echo 'Settings failed to save.';
-          exit(1);
-        } else {
-          echo 'Settings saved successfully.';
-        }
-        " --allow-root
+        wp eval-file ${{ github.workspace }}/tests/wp-integration-scripts/test-settings-update.php --allow-root
         
     - name: Smoke Test - Tutor Course Builder Enqueue
       run: |
         cd /tmp/wordpress
-        
-        # Test that Tutor_Course_Builder exposes correct localized variables (regression test for emailCertificate vs emailParticipant)
-        wp eval '
-        global $wp_scripts;
-        $builder = new \CertPSU\TutorLMS\Integration\Tutor_Course_Builder();
-        $builder->enqueue();
-        $data = $wp_scripts->get_data("certpsu-tutorlms-course-builder", "data");
-        if (strpos($data, "emailCertificate") !== false && strpos($data, "emailRequired") !== false && strpos($data, "emailWithout") !== false) {
-          if (strpos($data, "emailParticipant") === false) {
-            echo "TutorCourseBuilder enqueued localized script correctly.";
-          } else {
-            echo "TutorCourseBuilder must NOT use the old emailParticipant key.";
-            exit(1);
-          }
-        } else {
-          echo "TutorCourseBuilder missing correct localized variables. Data: " . $data;
-          exit(1);
-        }
-        ' --allow-root
+        wp eval-file ${{ github.workspace }}/tests/wp-integration-scripts/test-tutor-course-builder.php --allow-root
 
     - name: Lifecycle Test - Deactivate & Reactivate
       run: |
