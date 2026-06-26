@@ -93,7 +93,7 @@ final class Course_Settings {
 					'certificate_email_template' => array(
 						'label'          => 'Certificate email template',
 						'type'           => 'text',
-						'options_source' => 'email_template:certificate',
+						'options_source' => 'email_template:participant',
 						'help'           => 'Select from the organization email templates. Falls back to manual id entry when the API is unavailable.',
 					),
 					'endorser_required_endorsement_email_template' => array(

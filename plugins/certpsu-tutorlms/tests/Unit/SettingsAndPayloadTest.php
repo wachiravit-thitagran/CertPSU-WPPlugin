@@ -129,7 +129,7 @@ final class SettingsAndPayloadTest extends TestCase {
 		$schema = \CertPSU\TutorLMS\Settings\Course_Settings::schema();
 		$fields = $schema['connection']['fields'];
 
-		self::assertSame( 'email_template:certificate', $fields['certificate_email_template']['options_source'] );
+		self::assertSame( 'email_template:participant', $fields['certificate_email_template']['options_source'] );
 		self::assertSame( 'email_template:endorser_required_endorsement', $fields['endorser_required_endorsement_email_template']['options_source'] );
 		self::assertSame( 'email_template:endorser_without_endorsement', $fields['endorser_without_endorsement_email_template']['options_source'] );
 	}
