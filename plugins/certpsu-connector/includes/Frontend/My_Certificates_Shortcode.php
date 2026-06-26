@@ -18,6 +18,22 @@ use CertPSU\Connector\Support\Template;
 final class My_Certificates_Shortcode {
 
 	/**
+	 * Certificate repository.
+	 *
+	 * @var \CertPSU\Connector\Database\Repositories\Certificate_Repository
+	 */
+	private \CertPSU\Connector\Database\Repositories\Certificate_Repository $certificate_repository;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param \CertPSU\Connector\Database\Repositories\Certificate_Repository $certificate_repository Certificate repo.
+	 */
+	public function __construct( \CertPSU\Connector\Database\Repositories\Certificate_Repository $certificate_repository ) {
+		$this->certificate_repository = $certificate_repository;
+	}
+
+	/**
 	 * Register the shortcode.
 	 *
 	 * @return void
@@ -37,7 +53,7 @@ final class My_Certificates_Shortcode {
 		}
 
 		$user_id           = get_current_user_id();
-		$core_certificates = certpsu()->container()->get( 'certificate_repository' )->get_by_wp_user_id( $user_id );
+		$core_certificates = $this->certificate_repository->get_by_wp_user_id( $user_id );
 
 		// Format core certificates.
 		$formatted_certs = array();

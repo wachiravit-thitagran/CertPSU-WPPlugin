@@ -100,7 +100,7 @@ final class Bootstrap {
 		);
 
 		( new \CertPSU\Connector\Queue\Jobs( $container ) )->register();
-		( new \CertPSU\Connector\Frontend\My_Certificates_Shortcode() )->register();
+		( new \CertPSU\Connector\Frontend\My_Certificates_Shortcode( $container->get( 'certificate_repository' ) ) )->register();
 
 		$container->set( 'admin_menu', new \CertPSU\Connector\Admin\Admin_Menu() );
 		$container->set( 'settings_page', new \CertPSU\Connector\Admin\Settings_Page() );

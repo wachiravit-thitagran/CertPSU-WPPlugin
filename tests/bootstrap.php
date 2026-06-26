@@ -501,3 +501,9 @@ if ( ! function_exists( 'sanitize_key' ) ) {
 	}
 }
 
+if ( ! function_exists( 'is_user_logged_in' ) ) {
+	function is_user_logged_in() {
+		return $GLOBALS['mock_is_user_logged_in'] ?? true;
+	}
+}
+
