@@ -276,32 +276,35 @@ final class Field_Renderer {
 	private function endorser_row( string $base, int|string $i, array $row, array $endorser_options = array() ): void {
 		$n = static fn( string $f ): string => $base . '[' . $i . '][' . $f . ']';
 
-		echo '<div class="certpsu-endorser-row">';
+		echo '<div class="certpsu-endorser-row" style="margin-bottom: 15px; padding: 15px; background: #fafafa; border: 1px solid #e5e5e5; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">';
 		$endorser_id_value = (string) ( $row['endorser_id'] ?? '' );
 		printf(
-			'<select name="%1$s">%2$s</select>',
+			'<label style="display: flex; flex-direction: column; font-size: 12px; color: #666;">%1$s <select name="%2$s" style="margin-top: 3px;">%3$s</select></label>',
+			esc_html__( 'Slot', 'certpsu-tutorlms' ),
 			esc_attr( $n( 'endorser_id' ) ),
-			$this->options_html( array( '' => __( '— endorser —', 'certpsu-tutorlms' ) ) + Course_Settings::endorser_positions(), $endorser_id_value ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			$this->options_html( array( '' => __( '— select slot —', 'certpsu-tutorlms' ) ) + Course_Settings::endorser_positions(), $endorser_id_value ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		);
 		if ( array() !== $endorser_options ) {
-			$user_choices = array( '' => __( '— user —', 'certpsu-tutorlms' ) ) + $endorser_options;
+			$user_choices = array( '' => __( '— select user —', 'certpsu-tutorlms' ) ) + $endorser_options;
 			$user_value   = (string) ( $row['user'] ?? '' );
 			if ( '' !== $user_value && ! array_key_exists( $user_value, $user_choices ) ) {
 				$user_choices[ $user_value ] = $user_value;
 			}
 			printf(
-				'<select name="%1$s">%2$s</select>',
+				'<label style="display: flex; flex-direction: column; font-size: 12px; color: #666;">%1$s <select name="%2$s" style="margin-top: 3px;">%3$s</select></label>',
+				esc_html__( 'User (API)', 'certpsu-tutorlms' ),
 				esc_attr( $n( 'user' ) ),
 				$this->options_html( $user_choices, $user_value ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			);
 		} else {
-			$this->endorser_text( $n( 'user' ), (string) ( $row['user'] ?? '' ), __( 'user id', 'certpsu-tutorlms' ) );
+			$this->endorser_text( $n( 'user' ), (string) ( $row['user'] ?? '' ), __( 'User ID', 'certpsu-tutorlms' ) );
 		}
-		$this->endorser_text( $n( 'name' ), (string) ( $row['name'] ?? '' ), __( 'name', 'certpsu-tutorlms' ) );
-		$this->endorser_text( $n( 'position' ), (string) ( $row['position'] ?? '' ), __( 'position', 'certpsu-tutorlms' ) );
+		$this->endorser_text( $n( 'name' ), (string) ( $row['name'] ?? '' ), __( 'Name (Printed)', 'certpsu-tutorlms' ) );
+		$this->endorser_text( $n( 'position' ), (string) ( $row['position'] ?? '' ), __( 'Position (Printed)', 'certpsu-tutorlms' ) );
 
 		printf(
-			'<select name="%1$s">%2$s</select>',
+			'<label style="display: flex; flex-direction: column; font-size: 12px; color: #666;">%1$s <select name="%2$s" style="margin-top: 3px;">%3$s</select></label>',
+			esc_html__( 'Requirement', 'certpsu-tutorlms' ),
 			esc_attr( $n( 'endorse_requirement' ) ),
 			$this->options_html(
 				array(
@@ -312,7 +315,8 @@ final class Field_Renderer {
 			) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		);
 		printf(
-			'<select name="%1$s">%2$s</select>',
+			'<label style="display: flex; flex-direction: column; font-size: 12px; color: #666;">%1$s <select name="%2$s" style="margin-top: 3px;">%3$s</select></label>',
+			esc_html__( 'Auto-send Email', 'certpsu-tutorlms' ),
 			esc_attr( $n( 'auto_send_mail_to_endorse' ) ),
 			$this->options_html(
 				array(
@@ -337,7 +341,8 @@ final class Field_Renderer {
 	 */
 	private function endorser_text( string $name, string $value, string $placeholder ): void {
 		printf(
-			'<input type="text" name="%1$s" value="%2$s" placeholder="%3$s" />',
+			'<label style="display: flex; flex-direction: column; font-size: 12px; color: #666;">%1$s <input type="text" name="%2$s" value="%3$s" placeholder="%4$s" style="margin-top: 3px;" /></label>',
+			esc_html( $placeholder ),
 			esc_attr( $name ),
 			esc_attr( $value ),
 			esc_attr( $placeholder )

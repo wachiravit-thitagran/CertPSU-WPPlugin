@@ -116,16 +116,17 @@ final class Course_Settings {
 					'class_name'                  => array(
 						'label' => 'Class name',
 						'type'  => 'text',
-						'help'  => 'Leave blank to use the course title.',
+						'help'  => 'Leave blank to use the course title. Placeholders: {course_title}, {course_id}, {current_date}, {completed_course_day}, {completed_course_month}, {completed_course_month_short}, {completed_course_month_th}, {completed_course_month_th_short}, {completed_course_year}, {completed_course_year_bd}',
 					),
 					'printed_name'                => array(
 						'label' => 'Printed name',
 						'type'  => 'textarea',
-						'help'  => 'Leave blank to use the course title.',
+						'help'  => 'Leave blank to use the course title. Placeholders: {course_title}, {course_id}, {current_date}, {completed_course_day}, {completed_course_month}, {completed_course_month_short}, {completed_course_month_th}, {completed_course_month_th_short}, {completed_course_year}, {completed_course_year_bd}',
 					),
 					'description'                 => array(
 						'label' => 'Description',
 						'type'  => 'textarea',
+						'help'  => 'Placeholders: {class_name}, {printed_name}, {course_title}, {course_id}, {current_date}, {completed_course_day}, {completed_course_month}, {completed_course_month_short}, {completed_course_month_th}, {completed_course_month_th_short}, {completed_course_year}, {completed_course_year_bd}',
 					),
 					'started_date'                => array(
 						'label' => 'Started date',
@@ -201,28 +202,32 @@ final class Course_Settings {
 						'help'           => 'Select a certificate template from the organization. Falls back to manual id entry when the API is unavailable.',
 					),
 					'template_name'     => array(
-						'label'       => 'Template name',
+						'label'       => 'CertPSU certificate name',
 						'type'        => 'text',
 						'placeholder' => 'เกียรติบัตรผู้เข้าร่วม',
 						'default'     => 'เกียรติบัตรผู้เข้าร่วม',
+						'help'        => 'Placeholders: {class_name}, {printed_name}, {course_title}, {course_id}, {current_date}, {completed_course_day}, {completed_course_month}, {completed_course_month_short}, {completed_course_month_th}, {completed_course_month_th_short}, {completed_course_year}, {completed_course_year_bd}',
 					),
 					'organization_name' => array(
-						'label'       => 'Organization name (printed)',
+						'label'       => 'CertPSU organization name (printed)',
 						'type'        => 'text',
 						'placeholder' => 'สำนักนวัตกรรมดิจิทัลและระบบอัจฉริยะ',
 						'default'     => 'สำนักนวัตกรรมดิจิทัลและระบบอัจฉริยะ',
+						'help'        => 'Placeholders: {class_name}, {printed_name}, {course_title}, {course_id}, {current_date}, {completed_course_day}, {completed_course_month}, {completed_course_month_short}, {completed_course_month_th}, {completed_course_month_th_short}, {completed_course_year}, {completed_course_year_bd}',
 					),
 					'declaration_text'  => array(
-						'label'       => 'Declaration text',
+						'label'       => 'CertPSU declaration text',
 						'type'        => 'text',
 						'placeholder' => 'มอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า',
 						'default'     => 'มอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า',
+						'help'        => 'Placeholders: {class_name}, {printed_name}, {course_title}, {course_id}, {current_date}, {completed_course_day}, {completed_course_month}, {completed_course_month_short}, {completed_course_month_th}, {completed_course_month_th_short}, {completed_course_year}, {completed_course_year_bd}',
 					),
 					'certificate_text'  => array(
-						'label'       => 'Certificate text',
+						'label'       => 'CertPSU certificate text',
 						'type'        => 'textarea',
 						'placeholder' => 'ได้ปฏิบัติงานอาสาผ่านระดับผู้เชี่ยวชาญถอดลายลักษณ์',
 						'default'     => 'ได้ปฏิบัติงานอาสาผ่านระดับผู้เชี่ยวชาญถอดลายลักษณ์',
+						'help'        => 'Placeholders: {class_name}, {printed_name}, {course_title}, {course_id}, {current_date}, {completed_course_day}, {completed_course_month}, {completed_course_month_short}, {completed_course_month_th}, {completed_course_month_th_short}, {completed_course_year}, {completed_course_year_bd}',
 					),
 					'template_group'    => array(
 						'label'   => 'Group',

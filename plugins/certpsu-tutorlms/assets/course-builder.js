@@ -30,28 +30,31 @@
 		}
 		function selectOrText( field, options ) {
 			if ( options && options.length ) {
-				return { name: field.name, type: 'select', label: field.label, options: withBlank( options ), priority: field.priority };
+				return { name: field.name, type: 'select', label: field.label, options: withBlank( options ), priority: field.priority, desc: field.desc };
 			}
-			return { name: field.name, type: 'text', label: field.label, placeholder: field.placeholder, priority: field.priority };
+			return { name: field.name, type: 'text', label: field.label, placeholder: field.placeholder, priority: field.priority, desc: field.desc };
 		}
+
+		var placeholdersTooltip = "Available placeholders: {course_title}, {course_id}, {current_date}, {completed_course_day}, {completed_course_month}, {completed_course_month_short}, {completed_course_month_th}, {completed_course_month_th_short}, {completed_course_year}, {completed_course_year_bd}";
+		var extendedPlaceholdersTooltip = placeholdersTooltip + ", {class_name}, {printed_name}";
 
 		add( slot, { name: 'certpsu_enabled', type: 'switch', label: 'CertPSU: issue certificate on completion', priority: nextPrio() } );
 
 		add( slot, selectOrText( { name: 'certpsu_template_id', label: 'CertPSU template', placeholder: 'cert template id', priority: nextPrio() }, cb.certificateTemplates ) );
-		add( slot, { name: 'certpsu_template_name', type: 'text', label: 'CertPSU certificate name', placeholder: 'เกียรติบัตรผู้เข้าร่วม', priority: nextPrio() } );
-		add( slot, { name: 'certpsu_organization_name', type: 'text', label: 'CertPSU organization name (printed)', placeholder: 'สำนักนวัตกรรมดิจิทัลและระบบอัจฉริยะ', priority: nextPrio() } );
-		add( slot, { name: 'certpsu_declaration_text', type: 'text', label: 'CertPSU declaration text', placeholder: 'มอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า', priority: nextPrio() } );
-		add( slot, { name: 'certpsu_certificate_text', type: 'textarea', label: 'CertPSU certificate text', placeholder: 'ได้ปฏิบัติงานอาสาผ่านระดับผู้เชี่ยวชาญถอดลายลักษณ์', priority: nextPrio() } );
+		add( slot, { name: 'certpsu_template_name', type: 'text', label: 'CertPSU certificate name', placeholder: 'เกียรติบัตรผู้เข้าร่วม', priority: nextPrio(), desc: extendedPlaceholdersTooltip } );
+		add( slot, { name: 'certpsu_organization_name', type: 'text', label: 'CertPSU organization name (printed)', placeholder: 'สำนักนวัตกรรมดิจิทัลและระบบอัจฉริยะ', priority: nextPrio(), desc: extendedPlaceholdersTooltip } );
+		add( slot, { name: 'certpsu_declaration_text', type: 'text', label: 'CertPSU declaration text', placeholder: 'มอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า', priority: nextPrio(), desc: extendedPlaceholdersTooltip } );
+		add( slot, { name: 'certpsu_certificate_text', type: 'textarea', label: 'CertPSU certificate text', placeholder: 'ได้ปฏิบัติงานอาสาผ่านระดับผู้เชี่ยวชาญถอดลายลักษณ์', priority: nextPrio(), desc: extendedPlaceholdersTooltip } );
 		add( slot, { name: 'certpsu_template_group', type: 'select', label: 'CertPSU certificate group', options: groups, priority: nextPrio() } );
-		add( slot, { name: 'certpsu_remark', type: 'text', label: 'CertPSU remark', priority: nextPrio() } );
+		add( slot, { name: 'certpsu_remark', type: 'text', label: 'CertPSU remark', priority: nextPrio(), desc: extendedPlaceholdersTooltip } );
 
 		add( slot, selectOrText( { name: 'certpsu_certificate_email_template', label: 'CertPSU certificate email template', placeholder: 'email template id', priority: nextPrio() }, cb.emailCertificate ) );
 		add( slot, selectOrText( { name: 'certpsu_endorser_required_endorsement_email_template', label: 'Endorser (required) email template', placeholder: 'email template id', priority: nextPrio() }, cb.emailRequired ) );
 		add( slot, selectOrText( { name: 'certpsu_endorser_without_endorsement_email_template', label: 'Endorser (without endorsement) email template', placeholder: 'email template id', priority: nextPrio() }, cb.emailWithout ) );
 
-		add( slot, { name: 'certpsu_class_name', type: 'text', label: 'Class name', placeholder: 'Leave blank to use course title', priority: nextPrio() } );
-		add( slot, { name: 'certpsu_printed_name', type: 'textarea', label: 'Printed name', placeholder: 'Leave blank to use course title', priority: nextPrio() } );
-		add( slot, { name: 'certpsu_description', type: 'textarea', label: 'Description', priority: nextPrio() } );
+		add( slot, { name: 'certpsu_class_name', type: 'text', label: 'Class name', placeholder: 'Leave blank to use course title', priority: nextPrio(), desc: placeholdersTooltip } );
+		add( slot, { name: 'certpsu_printed_name', type: 'textarea', label: 'Printed name', placeholder: 'Leave blank to use course title', priority: nextPrio(), desc: placeholdersTooltip } );
+		add( slot, { name: 'certpsu_description', type: 'textarea', label: 'Description', priority: nextPrio(), desc: extendedPlaceholdersTooltip } );
 
 		add( slot, { name: 'certpsu_started_date', type: 'text', label: 'Started date (YYYY-MM-DD)', placeholder: 'Leave blank to use course creation date', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_ended_date', type: 'text', label: 'Ended date (YYYY-MM-DD)', placeholder: 'Leave blank to use course creation date', priority: nextPrio() } );
