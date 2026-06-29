@@ -146,7 +146,7 @@ final class Course_Settings {
 					'class_date_text'             => array(
 						'label' => 'Class date text',
 						'type'  => 'text',
-						'help'  => 'Placeholders: {date_day}, {date_month}, {date_year}, etc.',
+						'help'  => 'Placeholders: {date_day}, {date_month}, {date_year}, {current_date}, {completed_course_day}, {completed_course_month}, {completed_course_month_short}, {completed_course_month_th}, {completed_course_month_th_short}, {completed_course_year}, {completed_course_year_bd}',
 					),
 					'instructors'                 => array(
 						'label' => 'Instructors',
