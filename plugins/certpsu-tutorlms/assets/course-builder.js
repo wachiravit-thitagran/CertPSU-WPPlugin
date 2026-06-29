@@ -59,7 +59,7 @@
 		add( slot, { name: 'certpsu_started_date', type: 'text', label: 'Started date (YYYY-MM-DD)', placeholder: 'Leave blank to use course creation date', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_ended_date', type: 'text', label: 'Ended date (YYYY-MM-DD)', placeholder: 'Leave blank to use course creation date', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_issued_date', type: 'text', label: 'Issued date (YYYY-MM-DD)', placeholder: 'Leave blank to use course creation date', priority: nextPrio() } );
-		add( slot, { name: 'certpsu_class_date_text', type: 'text', label: 'Class date text', desc: 'Placeholders: {class_name}, {printed_name}, {course_title}, {course_id}, {current_date}, {completed_course_day}, {completed_course_month}, {completed_course_month_short}, {completed_course_month_th}, {completed_course_month_th_short}, {completed_course_year}, {completed_course_year_bd}', priority: nextPrio() } );
+		add( slot, { name: 'certpsu_class_date_text', type: 'text', label: 'Class date text', desc: 'Placeholders: {date_day}, {date_month}, {date_year}, etc.', priority: nextPrio() } );
 
 		add( slot, { name: 'certpsu_instructors', type: 'textarea', label: 'Instructors (One per line)', priority: nextPrio() } );
 		add( slot, { name: 'certpsu_tags', type: 'textarea', label: 'Tags (One per line)', priority: nextPrio() } );
