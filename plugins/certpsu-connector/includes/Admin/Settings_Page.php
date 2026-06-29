@@ -131,6 +131,7 @@ final class Settings_Page {
 					echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( 'Connection test failed: %s', 'certpsu-connector' ), $response->error_message ) ) . '</p></div>';
 				}
 			} catch ( \Throwable $e ) {
+				error_log( 'CertPSU Connection Test Error: ' . $e->getMessage() );
 				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( sprintf( __( 'Connection test error: %s', 'certpsu-connector' ), $e->getMessage() ) ) . '</p></div>';
 			}
 		} else {

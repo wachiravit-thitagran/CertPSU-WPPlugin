@@ -167,6 +167,7 @@ final class Remote_Options {
 		try {
 			$result = $producer();
 		} catch ( \Throwable $e ) {
+			error_log( 'CertPSU Remote Options Error: ' . $e->getMessage() );
 			$result = array();
 		}
 

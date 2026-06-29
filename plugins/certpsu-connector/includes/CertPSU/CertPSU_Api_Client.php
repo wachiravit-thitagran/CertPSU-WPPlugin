@@ -183,6 +183,7 @@ final class CertPSU_Api_Client {
 		$duration      = (int) round( ( microtime( true ) - $started ) * 1000 );
 
 		if ( is_wp_error( $http_response ) ) {
+			error_log( sprintf( 'CertPSU API Error (HTTP Request Failed) [%s]: %s', $http_response->get_error_code(), $http_response->get_error_message() ) );
 			$log_id = $this->logs->insert(
 				array(
 					'method'             => $method,
@@ -221,6 +222,10 @@ final class CertPSU_Api_Client {
 		if ( is_array( $decoded ) && isset( $decoded['error'] ) && is_array( $decoded['error'] ) ) {
 			$error_code    = isset( $decoded['error']['code'] ) ? (string) $decoded['error']['code'] : $error_code;
 			$error_message = isset( $decoded['error']['message'] ) ? (string) $decoded['error']['message'] : $error_message;
+		}
+
+		if ( ! $success ) {
+			error_log( sprintf( 'CertPSU API Error (HTTP %d) [%s]: %s', $status, $error_code, $error_message ) );
 		}
 
 		$log_id = $this->logs->insert(
