@@ -84,14 +84,20 @@ final class Class_Payload_Builder {
 		$context['class_name']   = $name;
 		$context['printed_name'] = $printed_name;
 
+		$raw_description     = (string) ( $settings['description'] ?? '' );
+		$raw_class_date_text = (string) ( $settings['class_date_text'] ?? '' );
+
+		$description     = certpsu()->replacer()->replace( $raw_description, $context );
+		$class_date_text = certpsu()->replacer()->replace( $raw_class_date_text, $context );
+
 		$class = array(
 			'name'                        => $name,
 			'printed_name'                => $printed_name,
-			'description'                 => $this->null_if_empty( (string) ( $settings['description'] ?? '' ) ),
+			'description'                 => $this->null_if_empty( $description ),
 			'started_date'                => $this->first_non_empty( (string) ( $settings['started_date'] ?? '' ), $today ),
 			'ended_date'                  => $this->first_non_empty( (string) ( $settings['ended_date'] ?? '' ), $today ),
 			'issued_date'                 => $this->first_non_empty( (string) ( $settings['issued_date'] ?? '' ), $today ),
-			'class_date_text'             => $this->null_if_empty( (string) ( $settings['class_date_text'] ?? '' ) ),
+			'class_date_text'             => $this->null_if_empty( $class_date_text ),
 			'instructors'                 => $this->resolve_instructors( $course_id, $settings ),
 			'tags'                        => $this->as_list( $settings['tags'] ?? array() ),
 			'allow_duplicate_participant' => (string) ( $settings['allow_duplicate_participant'] ?? 'not_allowed' ),
