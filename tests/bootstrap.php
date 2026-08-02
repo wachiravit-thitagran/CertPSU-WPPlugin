@@ -19,6 +19,10 @@ if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
 	define( 'MINUTE_IN_SECONDS', 60 );
 }
 
+if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
+	define( 'HOUR_IN_SECONDS', 60 * MINUTE_IN_SECONDS );
+}
+
 class WPDieException extends \Exception {}
 
 if ( ! function_exists( 'certpsu' ) ) {
@@ -504,6 +508,147 @@ if ( ! function_exists( 'sanitize_key' ) ) {
 if ( ! function_exists( 'is_user_logged_in' ) ) {
 	function is_user_logged_in() {
 		return $GLOBALS['mock_is_user_logged_in'] ?? true;
+	}
+}
+
+/*
+ * Transient store, backed by $GLOBALS['mock_transients']. Expiry is ignored:
+ * tests seed and clear entries directly.
+ */
+if ( ! function_exists( 'get_transient' ) ) {
+	/**
+	 * Minimal get_transient() stub.
+	 *
+	 * @param string $transient Transient name.
+	 * @return mixed Stored value, or false when unset.
+	 */
+	function get_transient( $transient ) {
+		return $GLOBALS['mock_transients'][ $transient ] ?? false;
+	}
+}
+
+if ( ! function_exists( 'set_transient' ) ) {
+	/**
+	 * Minimal set_transient() stub.
+	 *
+	 * @param string $transient  Transient name.
+	 * @param mixed  $value      Value to store.
+	 * @param int    $expiration Ignored.
+	 * @return bool
+	 */
+	function set_transient( $transient, $value, $expiration = 0 ) {
+		$GLOBALS['mock_transients'][ $transient ] = $value;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'delete_transient' ) ) {
+	/**
+	 * Minimal delete_transient() stub.
+	 *
+	 * @param string $transient Transient name.
+	 * @return bool
+	 */
+	function delete_transient( $transient ) {
+		unset( $GLOBALS['mock_transients'][ $transient ] );
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_remote_get' ) ) {
+	/**
+	 * Minimal wp_remote_get() stub, sharing the wp_remote_request() mock.
+	 *
+	 * @param string $url  Request URL.
+	 * @param array  $args Request args.
+	 * @return mixed
+	 */
+	function wp_remote_get( $url, $args = array() ) {
+		return wp_remote_request( $url, $args );
+	}
+}
+
+if ( ! function_exists( 'plugin_basename' ) ) {
+	/**
+	 * Minimal plugin_basename() stub.
+	 *
+	 * @param string $file Plugin file path.
+	 * @return string
+	 */
+	function plugin_basename( $file ) {
+		return basename( dirname( $file ) ) . '/' . basename( $file );
+	}
+}
+
+if ( ! function_exists( 'untrailingslashit' ) ) {
+	/**
+	 * Minimal untrailingslashit() stub.
+	 *
+	 * @param string $value Value.
+	 * @return string
+	 */
+	function untrailingslashit( $value ) {
+		return rtrim( (string) $value, '/\\' );
+	}
+}
+
+if ( ! function_exists( 'wpautop' ) ) {
+	/**
+	 * Minimal wpautop() stub.
+	 *
+	 * @param string $text Text.
+	 * @param bool   $br   Ignored.
+	 * @return string
+	 */
+	function wpautop( $text, $br = true ) {
+		return '<p>' . str_replace( "\n\n", "</p>\n<p>", (string) $text ) . '</p>';
+	}
+}
+
+if ( ! function_exists( 'wp_kses_post' ) ) {
+	/**
+	 * Minimal wp_kses_post() stub.
+	 *
+	 * @param string $data Data.
+	 * @return string
+	 */
+	function wp_kses_post( $data ) {
+		return (string) $data;
+	}
+}
+
+if ( ! function_exists( 'get_plugin_data' ) ) {
+	/**
+	 * Minimal get_plugin_data() stub: reads the plugin file header block.
+	 *
+	 * @param string $file      Plugin main file.
+	 * @param bool   $markup    Ignored.
+	 * @param bool   $translate Ignored.
+	 * @return array<string,string>
+	 */
+	function get_plugin_data( $file, $markup = true, $translate = true ) {
+		$fields = array(
+			'Name'        => 'Plugin Name',
+			'PluginURI'   => 'Plugin URI',
+			'Version'     => 'Version',
+			'Description' => 'Description',
+			'Author'      => 'Author',
+			'RequiresWP'  => 'Requires at least',
+			'RequiresPHP' => 'Requires PHP',
+		);
+
+		// Read the file directly: BypassFinals swaps in its own file:// stream
+		// wrapper, under which is_readable() reports false for real files.
+		$contents = (string) @file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.PHP.NoSilencedErrors.Discouraged
+		$data     = array();
+
+		foreach ( $fields as $key => $header ) {
+			$data[ $key ] = preg_match( '/^[ \t\/*#@]*' . preg_quote( $header, '/' ) . ':(.*)$/mi', $contents, $m )
+				? trim( $m[1] )
+				: '';
+		}
+
+		return $data;
 	}
 }
 

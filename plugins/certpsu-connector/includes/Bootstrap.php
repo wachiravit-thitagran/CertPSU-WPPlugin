@@ -122,7 +122,43 @@ final class Bootstrap {
 			);
 		}
 
+		self::init_updater();
+
 		self::$plugin = new Plugin( $container );
+	}
+
+	/**
+	 * Register self-hosted updates from this repository's GitHub releases.
+	 *
+	 * Installs the `certpsu-connector-<version>.zip` asset attached to the
+	 * release; the asset name is matched from the slug by Github_Updater.
+	 *
+	 * @return void
+	 */
+	private static function init_updater(): void {
+		if ( ! function_exists( 'add_filter' ) || ! defined( 'CERTPSU_CONNECTOR_FILE' ) ) {
+			return;
+		}
+
+		/**
+		 * Filters the repository a CertPSU plugin checks for releases.
+		 *
+		 * @param string $repo GitHub "owner/repo".
+		 * @param string $slug Plugin slug asking for it.
+		 */
+		$repo = (string) apply_filters(
+			'certpsu_github_repo',
+			defined( 'CERTPSU_CONNECTOR_GITHUB_REPO' ) ? (string) CERTPSU_CONNECTOR_GITHUB_REPO : '',
+			'certpsu-connector'
+		);
+
+		$updater = new \CertPSU\Connector\Support\Github_Updater(
+			(string) CERTPSU_CONNECTOR_FILE,
+			'certpsu-connector',
+			$repo,
+			defined( 'CERTPSU_CONNECTOR_VERSION' ) ? (string) CERTPSU_CONNECTOR_VERSION : ''
+		);
+		$updater->register();
 	}
 
 	/**

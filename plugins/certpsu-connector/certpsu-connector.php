@@ -1,6 +1,7 @@
 <?php
 /**
  * Plugin Name: CertPSU Connector
+ * Plugin URI: https://github.com/wachiravit-thitagran/CertPSU-WPPlugin
  * Description: Connector plugin for async certificate issuance through cert.psu.ac.th.
  * Version: 0.1.5
  * Requires PHP: 8.2
@@ -23,6 +24,19 @@ define( 'CERTPSU_CONNECTOR_FILE', __FILE__ );
 define( 'CERTPSU_CONNECTOR_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CERTPSU_CONNECTOR_URL', plugin_dir_url( __FILE__ ) );
 define( 'CERTPSU_CONNECTOR_DB_VERSION', '1' );
+
+/**
+ * Repository whose GitHub releases this plugin updates itself from. It must
+ * match the `Plugin URI` header above; a typo in the owner or repository name
+ * makes the GitHub API answer 404 exactly as it would for a repository with no
+ * releases, so no update is ever offered and nothing is logged.
+ *
+ * Define it before the plugin loads, or use the `certpsu_github_repo` filter, to
+ * track a fork instead.
+ */
+if ( ! defined( 'CERTPSU_CONNECTOR_GITHUB_REPO' ) ) {
+	define( 'CERTPSU_CONNECTOR_GITHUB_REPO', 'wachiravit-thitagran/CertPSU-WPPlugin' );
+}
 
 // Custom Autoloader.
 spl_autoload_register(

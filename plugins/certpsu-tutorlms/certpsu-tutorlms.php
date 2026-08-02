@@ -1,6 +1,7 @@
 <?php
 /**
  * Plugin Name: CertPSU TutorLMS Bridge
+ * Plugin URI: https://github.com/wachiravit-thitagran/CertPSU-WPPlugin
  * Description: Intercepts TutorLMS course completion and queues certificate issuance via CertPSU.
  * Version: 0.1.5
  * Requires PHP: 8.2
@@ -21,6 +22,19 @@ define( 'CERTPSU_TUTORLMS_VERSION', '0.1.5' );
 define( 'CERTPSU_TUTORLMS_FILE', __FILE__ );
 define( 'CERTPSU_TUTORLMS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CERTPSU_TUTORLMS_URL', plugin_dir_url( __FILE__ ) );
+
+/**
+ * Repository whose GitHub releases this plugin updates itself from. It must
+ * match the `Plugin URI` header above; a typo in the owner or repository name
+ * makes the GitHub API answer 404 exactly as it would for a repository with no
+ * releases, so no update is ever offered and nothing is logged.
+ *
+ * Define it before the plugin loads, or use the `certpsu_github_repo` filter, to
+ * track a fork instead.
+ */
+if ( ! defined( 'CERTPSU_TUTORLMS_GITHUB_REPO' ) ) {
+	define( 'CERTPSU_TUTORLMS_GITHUB_REPO', 'wachiravit-thitagran/CertPSU-WPPlugin' );
+}
 
 spl_autoload_register(
 	function ( string $class_name ): void {

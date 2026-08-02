@@ -83,6 +83,47 @@ version comes from the core plugin's `Version:` header
 It can also be run manually from the **Actions** tab (workflow_dispatch), which
 just uploads the zips as workflow artifacts.
 
+## Updating an installed site
+
+Both plugins update themselves from those releases: each one checks the
+repository for a newer tag and installs its own `<slug>-<version>.zip` asset, so
+**Dashboard → Updates** offers them like any plugin from wordpress.org. No
+wp-admin upload needed after the first install.
+
+The source zipball is deliberately never used as a fallback. This is a monorepo,
+so the zipball unpacks to the repository root rather than to a plugin; a release
+whose assets are missing simply offers no update.
+
+Each plugin carries its own copy of `includes/Support/Github_Updater.php` so it
+stays updatable on its own — the TutorLMS bridge keeps working through an
+update even while the connector is deactivated. A test pins the two copies
+together, and pins the repository to each plugin's `Plugin URI` header: a typo
+in the owner makes the GitHub API answer 404 exactly as it would for a
+repository with no releases, so updates would silently stop being offered.
+
+To point an install at a fork, define the constant before the plugin loads or
+filter it:
+
+```php
+define( 'CERTPSU_CONNECTOR_GITHUB_REPO', 'my-org/CertPSU-WPPlugin' );
+define( 'CERTPSU_TUTORLMS_GITHUB_REPO', 'my-org/CertPSU-WPPlugin' );
+
+// Or, for both at once:
+add_filter( 'certpsu_github_repo', fn( $repo, $slug ) => 'my-org/CertPSU-WPPlugin', 10, 2 );
+
+// Private fork, or just a higher API rate limit:
+add_filter(
+	'certpsu_github_request_args',
+	function ( array $args ): array {
+		$args['headers']['Authorization'] = 'Bearer ' . MY_GITHUB_TOKEN;
+		return $args;
+	}
+);
+```
+
+Release lookups are cached in a transient for six hours (one hour after a failed
+call), and shared by both plugins.
+
 ## Adding a new integration
 
 1. Create `plugins/certpsu-<name>/` with a `certpsu-<name>.php` plugin header

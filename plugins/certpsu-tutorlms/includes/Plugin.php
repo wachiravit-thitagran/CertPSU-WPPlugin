@@ -15,6 +15,7 @@ use CertPSU\TutorLMS\Admin\Defaults_Page;
 use CertPSU\TutorLMS\Integration\Tutor_Course_Builder;
 use CertPSU\TutorLMS\Integration\My_Certificates_Integration;
 use CertPSU\TutorLMS\Issuance\Completion_Handler;
+use CertPSU\TutorLMS\Support\Github_Updater;
 
 /**
  * Plugin core class.
@@ -43,6 +44,10 @@ final class Plugin {
 		// Frontend user dashboard integration.
 		( new My_Certificates_Integration() )->register();
 
+		// Self-hosted updates. Registered outside is_admin() because the update
+		// check also runs from cron.
+		$this->init_updater();
+
 		// Admin: per-course metabox, global defaults page, assets.
 		if ( is_admin() ) {
 			( new Course_Metabox() )->register();
@@ -51,5 +56,40 @@ final class Plugin {
 			( new \CertPSU\TutorLMS\Admin\Retroactive_Sync() )->register();
 			( new \CertPSU\TutorLMS\Admin\Admin_Notices() )->register();
 		}
+	}
+
+	/**
+	 * Register self-hosted updates from this repository's GitHub releases.
+	 *
+	 * The bridge ships from the same release as the connector but in its own
+	 * `certpsu-tutorlms-<version>.zip` asset, and keeps its own updater so it
+	 * stays updatable even when the connector is deactivated.
+	 *
+	 * @return void
+	 */
+	private function init_updater(): void {
+		if ( ! defined( 'CERTPSU_TUTORLMS_FILE' ) ) {
+			return;
+		}
+
+		/**
+		 * Filters the repository a CertPSU plugin checks for releases.
+		 *
+		 * @param string $repo GitHub "owner/repo".
+		 * @param string $slug Plugin slug asking for it.
+		 */
+		$repo = (string) apply_filters(
+			'certpsu_github_repo',
+			defined( 'CERTPSU_TUTORLMS_GITHUB_REPO' ) ? (string) CERTPSU_TUTORLMS_GITHUB_REPO : '',
+			'certpsu-tutorlms'
+		);
+
+		$updater = new Github_Updater(
+			(string) CERTPSU_TUTORLMS_FILE,
+			'certpsu-tutorlms',
+			$repo,
+			defined( 'CERTPSU_TUTORLMS_VERSION' ) ? (string) CERTPSU_TUTORLMS_VERSION : ''
+		);
+		$updater->register();
 	}
 }
