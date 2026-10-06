@@ -26,7 +26,7 @@ final class MCP {
 			'certpsu',
 			array(
 				'label'       => 'CertPSU',
-				'description' => 'Certificate issuance operations provided by CertPSU Connector.',
+				'description' => 'Certificate issuance, status tracking, and related certificate workflow operations.',
 			)
 		);
 	}
@@ -36,7 +36,7 @@ final class MCP {
 			'certpsu/get-issuance',
 			array(
 				'label'               => 'Get CertPSU Issuance',
-				'description'         => 'Get one certificate issuance workflow by ID.',
+				'description'         => 'Retrieves the current state and details of a certificate issuance by its issuance ID.',
 				'category'            => 'certpsu',
 				'input_schema'        => array(
 					'type'       => 'object',
@@ -55,7 +55,7 @@ final class MCP {
 			'certpsu/create-issuance',
 			array(
 				'label'               => 'Create CertPSU Issuance',
-				'description'         => 'Create an asynchronous CertPSU certificate issuance workflow.',
+				'description'         => 'Starts a certificate issuance workflow using the supplied issuance data and returns the resulting issuance record or error.',
 				'category'            => 'certpsu',
 				'input_schema'        => array(
 					'type'                 => 'object',
