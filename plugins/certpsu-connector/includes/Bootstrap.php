@@ -125,6 +125,8 @@ final class Bootstrap {
 		self::init_updater();
 
 		self::$plugin = new Plugin( $container );
+
+		MCP::register();
 	}
 
 	/**
