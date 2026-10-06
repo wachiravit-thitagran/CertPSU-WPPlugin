@@ -22,9 +22,9 @@ final class Certificate_Repository {
 	 *
 	 * @param int                            $issuance_id Issuance ID.
 	 * @param array<int,array<string,mixed>> $participants Participants.
-	 * @return true|WP_Error True when every participant row was inserted.
+	 * @return bool|WP_Error True when every participant row was inserted.
 	 */
-	public function insert_many( int $issuance_id, array $participants ): true|WP_Error {
+	public function insert_many( int $issuance_id, array $participants ): bool|WP_Error {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'certpsu_certificates';
