@@ -64,7 +64,9 @@ final class Create_Issuance_Service {
 		}
 
 		global $wpdb;
-		$wpdb->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( false === $wpdb->query( 'START TRANSACTION' ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return new WP_Error( 'certpsu_transaction_failed', 'Failed to start database transaction.' );
+		}
 
 		/**
 		 * Participants list.
@@ -94,14 +96,21 @@ final class Create_Issuance_Service {
 			return new WP_Error( 'certpsu_db_insert_failed', 'Failed to insert issuance row.' );
 		}
 
-		$this->certificates->insert_many( $issuance_id, $participants );
+		$certificate_result = $this->certificates->insert_many( $issuance_id, $participants );
+		if ( is_wp_error( $certificate_result ) ) {
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return $certificate_result;
+		}
 
 		if ( ! $this->queue->enqueue_process_issuance( $issuance_id ) ) {
 			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			return new WP_Error( 'certpsu_queue_failed', 'Failed to enqueue issuance workflow.' );
 		}
 
-		$wpdb->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( false === $wpdb->query( 'COMMIT' ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return new WP_Error( 'certpsu_commit_failed', 'Failed to commit issuance transaction.' );
+		}
 
 		do_action( 'certpsu_issuance_created', array( 'id' => $issuance_id ) );
 		do_action( 'certpsu_issuance_queued', array( 'id' => $issuance_id ) );

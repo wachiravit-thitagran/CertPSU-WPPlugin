@@ -81,6 +81,29 @@ class CreateIssuanceServiceTest extends TestCase {
 		$this->assertSame( 'tutorlms', $result->external_source );
 	}
 
+	public function test_certificate_insert_failure_rolls_back_and_does_not_enqueue(): void {
+		$this->settings->method( 'api_key' )->willReturn( 'key' );
+		$this->validator->method( 'validate_create_issuance' )->willReturn( array(
+			'external_source' => 'tutorlms',
+			'external_id' => '123',
+			'idempotency_mode' => 'return_existing',
+			'participants' => array( array( 'name' => 'John' ) ),
+		) );
+
+		$this->issuances->method( 'find_latest_by_external_ref' )->willReturn( null );
+		$this->issuances->method( 'insert' )->willReturn( 99 );
+		$this->certificates->method( 'insert_many' )->willReturn(
+			new \WP_Error( 'certpsu_certificate_insert_failed', 'insert failed' )
+		);
+		$this->queue->expects( $this->never() )->method( 'enqueue_process_issuance' );
+
+		$result = $this->service->handle( array() );
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( 'certpsu_certificate_insert_failed', $result->get_error_code() );
+		$this->assertSame( 'ROLLBACK', $GLOBALS['wpdb']->last_query );
+	}
+
 	public function test_returns_existing_issuance(): void {
 		$this->settings->method( 'api_key' )->willReturn( 'key' );
 		$this->validator->method( 'validate_create_issuance' )->willReturn( array(

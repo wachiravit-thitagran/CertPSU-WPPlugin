@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace CertPSU\Connector\Database\Repositories;
 
 use CertPSU\Connector\Support\Json;
+use WP_Error;
 
 /**
  * Certificate repository.
@@ -21,9 +22,9 @@ final class Certificate_Repository {
 	 *
 	 * @param int                            $issuance_id Issuance ID.
 	 * @param array<int,array<string,mixed>> $participants Participants.
-	 * @return void
+	 * @return bool|WP_Error True when every participant row was inserted.
 	 */
-	public function insert_many( int $issuance_id, array $participants ): void {
+	public function insert_many( int $issuance_id, array $participants ): bool|WP_Error {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'certpsu_certificates';
@@ -40,7 +41,7 @@ final class Certificate_Repository {
 				}
 			}
 
-			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$inserted = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				$table,
 				array(
 					'issuance_id'      => $issuance_id,
@@ -58,7 +59,17 @@ final class Certificate_Repository {
 					'updated_at'       => current_time( 'mysql', true ),
 				)
 			);
+
+			if ( false === $inserted ) {
+				return new WP_Error(
+					'certpsu_certificate_insert_failed',
+					'Failed to insert a certificate participant row.',
+					array( 'db_error' => (string) $wpdb->last_error )
+				);
+			}
 		}
+
+		return true;
 	}
 
 	/**
