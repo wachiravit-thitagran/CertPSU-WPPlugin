@@ -72,11 +72,23 @@ final class MCP {
 		return current_user_can( 'manage_options' );
 	}
 
-	public static function get_issuance( array $input ) {
+	/**
+	 * Get an issuance through the public facade.
+	 *
+	 * @param array<string,mixed> $input Ability input.
+	 * @return mixed
+	 */
+	public static function get_issuance( array $input ): mixed {
 		return certpsu()->get_issuance( (int) $input['issuance_id'] );
 	}
 
-	public static function create_issuance( array $input ) {
+	/**
+	 * Create an issuance through the public facade.
+	 *
+	 * @param array<string,mixed> $input Ability input.
+	 * @return mixed
+	 */
+	public static function create_issuance( array $input ): mixed {
 		$result = certpsu()->create_issuance( $input );
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -85,6 +97,12 @@ final class MCP {
 		return method_exists( $result, 'to_array' ) ? $result->to_array() : $result;
 	}
 
+	/**
+	 * MCP metadata.
+	 *
+	 * @param bool $readonly Whether the ability is read-only.
+	 * @return array<string,mixed>
+	 */
 	private static function meta( bool $readonly ): array {
 		return array(
 			'mcp'         => array( 'public' => true, 'type' => 'tool' ),
