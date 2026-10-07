@@ -28,6 +28,19 @@ jobs:
   release:
     if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - name: Checkout
@@ -68,7 +81,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          tools: composer
+          tools: composer, wp-cli
 
       - name: Install runtime dependencies (Action Scheduler)
         run: composer install --no-dev --prefer-dist --no-interaction --no-progress
@@ -90,6 +103,40 @@ jobs:
 
       - name: List artifacts
         run: ls -lh dist/
+
+      - name: Validate packaged plugin ZIPs in clean WordPress
+        env:
+          NEXT: ${{ steps.ver.outputs.next }}
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/release-wp
+          mkdir -p /tmp/release-wp
+          cd /tmp/release-wp
+
+          wp core download --allow-root
+          wp config create --dbname=wordpress --dbuser=root --dbpass=root --dbhost=127.0.0.1 --allow-root
+          wp core install --url=http://localhost --title="Release Validation" --admin_user=admin --admin_password=admin --admin_email=admin@example.test --skip-email --allow-root
+
+          wp plugin install tutor --activate --allow-root
+
+          connector_zip="$(find "$GITHUB_WORKSPACE/dist" -maxdepth 1 -type f -name '*connector*.zip' | head -n1)"
+          tutorlms_zip="$(find "$GITHUB_WORKSPACE/dist" -maxdepth 1 -type f -name '*tutorlms*.zip' | head -n1)"
+          test -n "$connector_zip"
+          test -n "$tutorlms_zip"
+
+          wp plugin install "$connector_zip" --activate --force --allow-root
+          wp plugin install "$tutorlms_zip" --activate --force --allow-root
+
+          wp plugin is-active certpsu-connector --allow-root
+          wp plugin is-active certpsu-tutorlms --allow-root
+
+          test "$(wp plugin get certpsu-connector --field=version --allow-root)" = "$NEXT"
+          test "$(wp plugin get certpsu-tutorlms --field=version --allow-root)" = "$NEXT"
+
+          wp plugin deactivate certpsu-tutorlms certpsu-connector --allow-root
+          wp plugin activate certpsu-connector certpsu-tutorlms --allow-root
+
+          wp eval 'echo "Packaged CertPSU plugins loaded successfully.\n";' --allow-root
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
