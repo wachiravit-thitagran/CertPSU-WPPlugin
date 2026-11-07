@@ -11,10 +11,8 @@ CertPSU API responses. There are **no staging or production connections**.
 - Create a **Pipeline from SCM** job with repository
   `https://github.com/wachiravit-thitagran/CertPSU-WPPlugin.git`
 - Branch: `*/main`; script path: `Jenkinsfile`
-- Agent: any agent with **PHP >= 8.2**, Composer, curl and Git
-- The agent must have access to Composer package sources (or a populated
-  Composer cache/mirror). Jenkins also needs outbound HTTPS to GitHub API
-  if publishing statuses.
+- Agent: any Linux agent with **Docker CLI + accessible Docker daemon**, curl and Git. PHP and Composer run inside the image built from `tests/E2E/Dockerfile`.
+- Docker needs permission to build and run images. On first build it downloads base images and Debian packages; the container also downloads Composer packages (unless you have internal mirrors/caches). Jenkins needs outbound HTTPS to GitHub API only if publishing statuses.
 - Install Jenkins **Pipeline** and **Credentials Binding** plugins.
 - Add a secret-text credential ID `github-certpsu-status-token` containing a
   GitHub token scoped to this repository with **Commit statuses: Read/write**.
@@ -24,8 +22,7 @@ CertPSU API responses. There are **no staging or production connections**.
 
 ## Behavior
 
-Jenkins checks out the source, runs `composer install`, and runs the
-isolated PHPUnit E2E simulation. Tests cover:
+Jenkins checks out the source, builds a PHP 8.3 Docker image, then runs `composer install` and PHPUnit **inside a temporary container** against the checked-out source. Tests cover:
 1. Enabled course-completion event enqueues the expected issuance job.
 2. Fake participant addition and certificate release populate learner state.
 3. Repeated handler processing is idempotent and does not call the API again.
@@ -46,3 +43,10 @@ Passing it proves the orchestrated plugin logic works against mocks; it
 The separate legacy `tests/e2e/staging.php` script remains available for
 a future explicitly configured staging job, but the root Jenkinsfile
 does not invoke it.
+
+## Troubleshooting
+
+- If `command -v docker` fails, install Docker on the Jenkins **agent** or run the job on a node that already supports containers. This does not require PHP on the host.
+- If `docker info` fails, grant the Jenkins agent user access to the Docker daemon through a controlled agent configuration; Docker daemon access is highly privileged. Prefer a dedicated isolated agent rather than granting broad access on shared machines.
+- If Docker image download/apt/Composer downloads fail, configure an internal registry and package mirrors. A completely air-gapped agent needs prebuilt/cached images and Composer dependencies.
+- Missing `github-certpsu-status-token` is non-blocking; to publish commit statuses, add a secret-text token with Commit statuses read/write. SCM/Branch Source may independently emit GitHub 403 until its own credential is fixed.
