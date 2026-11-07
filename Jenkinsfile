@@ -39,17 +39,19 @@ pipeline {
                 script { publishGitHubStatus('pending', 'CertPSU offline mock E2E running') }
             }
         }
-        stage('Prepare isolated mock runtime') {
+        stage('Build isolated PHP runtime') {
             steps {
                 sh '''
                     set -eu
-                    command -v php
-                    command -v composer
-                    command -v curl
-                    php -v
-                    composer install --no-interaction --prefer-dist --no-progress
-                    test -f vendor/autoload.php
-                    test -x vendor/bin/phpunit
+                    command -v docker >/dev/null || {
+                        echo "ERROR: Jenkins agent needs Docker CLI and a usable Docker daemon; PHP is not required on the host."
+                        exit 2
+                    }
+                    docker info >/dev/null || {
+                        echo "ERROR: Docker daemon is inaccessible for this Jenkins agent."
+                        exit 2
+                    }
+                    docker build --pull -f tests/E2E/Dockerfile -t "certpsu-e2e-runtime:${BUILD_NUMBER}" .
                 '''
             }
         }
@@ -58,9 +60,17 @@ pipeline {
                 sh '''
                     set -eu
                     mkdir -p build/test-results
-                    vendor/bin/phpunit --configuration phpunit.xml.dist \
-                        --log-junit build/test-results/certpsu-mock-e2e.xml \
-                        tests/E2E/MockWordPressCertPSUE2ETest.php
+                    docker run --rm \
+                        --user "$(id -u):$(id -g)" \
+                        --volume "$PWD:/workspace" \
+                        --workdir /workspace \
+                        --env COMPOSER_HOME=/tmp/certpsu-composer \
+                        "certpsu-e2e-runtime:${BUILD_NUMBER}" \
+                        sh -ec 'composer install --no-interaction --prefer-dist --no-progress &&
+                                test -x vendor/bin/phpunit &&
+                                vendor/bin/phpunit --configuration phpunit.xml.dist
+                                  --log-junit build/test-results/certpsu-mock-e2e.xml
+                                  tests/E2E/MockWordPressCertPSUE2ETest.php'
                 '''
             }
         }
