@@ -30,7 +30,7 @@ if ( ! $course || 'courses' !== $course->post_type || 0 !== strpos( $course->pos
 if ( ! $user || 0 !== strpos( $user->user_login, 'e2e-certpsu' ) ) {
     WP_CLI::error( 'Use a dedicated learner with login prefix e2e-certpsu.' );
 }
-if ( ! is_plugin_active( 'certpsu-connector/certpsu-connector.php' ) ||
+if ( ! function_exists( 'is_plugin_active' ) ) {\n    require_once ABSPATH . 'wp-admin/includes/plugin.php';\n}\nif ( ! is_plugin_active( 'certpsu-connector/certpsu-connector.php' ) ||
      ! is_plugin_active( 'certpsu-tutorlms/certpsu-tutorlms.php' ) ||
      ! is_plugin_active( 'tutor/tutor.php' ) ) {
     WP_CLI::error( 'Connector, TutorLMS bridge, and Tutor LMS must be active.' );
