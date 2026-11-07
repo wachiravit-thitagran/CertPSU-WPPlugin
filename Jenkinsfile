@@ -1,7 +1,8 @@
 // Offline CertPSU E2E simulation. No WordPress, DB, private staging or real CertPSU service.
 def publishGitHubStatus(String state, String description) {
     // GitHub Checks plugin is not required. This uses the Commit Status API.
-    withCredentials([string(credentialsId: 'github-certpsu-status-token', variable: 'GH_STATUS_TOKEN')]) {
+    try {
+      withCredentials([string(credentialsId: 'github-certpsu-status-token', variable: 'GH_STATUS_TOKEN')]) {
         withEnv(["CERTPSU_STATUS_STATE=${state}", "CERTPSU_STATUS_DESCRIPTION=${description}"]) {
             sh '''
                 set +x
@@ -17,6 +18,9 @@ def publishGitHubStatus(String state, String description) {
                         "https://api.github.com/repos/wachiravit-thitagran/CertPSU-WPPlugin/statuses/$SHA" >/dev/null
             '''
         }
+      }
+    } catch (Exception error) {
+        echo "WARNING: Could not publish GitHub commit status (non-blocking): ${error.getClass().getSimpleName()}"
     }
 }
 
