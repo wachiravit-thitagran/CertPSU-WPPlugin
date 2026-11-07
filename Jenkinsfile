@@ -68,9 +68,7 @@ pipeline {
                         "certpsu-e2e-runtime:${BUILD_NUMBER}" \
                         sh -ec 'composer install --no-interaction --prefer-dist --no-progress &&
                                 test -x vendor/bin/phpunit &&
-                                vendor/bin/phpunit --configuration phpunit.xml.dist
-                                  --log-junit build/test-results/certpsu-mock-e2e.xml
-                                  tests/E2E/MockWordPressCertPSUE2ETest.php'
+                                vendor/bin/phpunit --configuration phpunit.xml.dist --log-junit build/test-results/certpsu-mock-e2e.xml tests/E2E/MockWordPressCertPSUE2ETest.php'
                 '''
             }
         }
