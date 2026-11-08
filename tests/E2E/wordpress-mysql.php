@@ -66,8 +66,8 @@ wp_update_user(array('ID' => $user_id, 'display_name' => 'E2E CertPSU Learner'))
 $course_id = wp_insert_post(array(
     'post_type' => 'courses',
     'post_status' => 'publish',
-    'post_title' => 'E2E CertPSU Test Course',
-    'post_name' => 'e2e-certpsu-course',
+    'post_title' => 'E2E CertPSU Test Course ' . $run,
+    'post_name' => 'e2e-certpsu-course-' . $run,
     'post_author' => 1,
 ), true);
 if (is_wp_error($course_id)) {
