@@ -8,7 +8,7 @@ def publishGitHubStatus(String state, String description) {
                 set +x
                 set -eu
                 SHA="$(git rev-parse HEAD)"
-                printf '{"state":"%s","description":"%s","context":"certpsu/mock-e2e"}' "$CERTPSU_STATUS_STATE" "$CERTPSU_STATUS_DESCRIPTION" |
+                printf '{"state":"%s","description":"%s","context":"certpsu/wordpress-mysql-e2e"}' "$CERTPSU_STATUS_STATE" "$CERTPSU_STATUS_DESCRIPTION" |
                     curl --fail --silent --show-error --retry 2 --request POST \
                         --header "Accept: application/vnd.github+json" \
                         --header "Authorization: Bearer $GH_STATUS_TOKEN" \
@@ -28,7 +28,7 @@ pipeline {
     agent any
     options {
         timestamps()
-        timeout(time: 15, unit: 'MINUTES')
+        timeout(time: 25, unit: 'MINUTES')
         disableConcurrentBuilds()
         skipDefaultCheckout(true)
     }
@@ -36,7 +36,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                script { publishGitHubStatus('pending', 'CertPSU offline mock E2E running') }
+                script { publishGitHubStatus('pending', 'CertPSU WordPress/MySQL E2E running') }
             }
         }
         stage('Docker prerequisites') {
@@ -89,8 +89,10 @@ pipeline {
                         --admin_user=e2e_admin --admin_password=e2e_only_password \
                         --admin_email=admin@example.test --skip-email
                     docker compose -f tests/E2E/compose.yaml run --rm cli plugin install tutor --activate
-                    docker compose -f tests/E2E/compose.yaml run --rm cli plugin install /workspace/dist/certpsu-connector-*.zip --activate
-                    docker compose -f tests/E2E/compose.yaml run --rm cli plugin install /workspace/dist/certpsu-tutorlms-*.zip --activate
+                    CONNECTOR_ZIP="$(ls dist/certpsu-connector-*.zip | head -n 1)"
+                    docker compose -f tests/E2E/compose.yaml run --rm cli plugin install "/workspace/$CONNECTOR_ZIP" --activate
+                    BRIDGE_ZIP="$(ls dist/certpsu-tutorlms-*.zip | head -n 1)"
+                    docker compose -f tests/E2E/compose.yaml run --rm cli plugin install "/workspace/$BRIDGE_ZIP" --activate
                     docker compose -f tests/E2E/compose.yaml run --rm --entrypoint sh cli -ec \
                         'mkdir -p /var/www/html/wp-content/mu-plugins &&
                          cp /workspace/tests/E2E/certpsu-api-mock.php /var/www/html/wp-content/mu-plugins/certpsu-api-mock.php'
@@ -110,10 +112,10 @@ pipeline {
     }
     post {
         success {
-            script { publishGitHubStatus('success', 'CertPSU offline mock E2E passed') }
+            script { publishGitHubStatus('success', 'CertPSU WordPress/MySQL E2E passed') }
         }
         unsuccessful {
-            script { publishGitHubStatus('failure', 'CertPSU offline mock E2E failed') }
+            script { publishGitHubStatus('failure', 'CertPSU WordPress/MySQL E2E failed') }
         }
         always {
             sh '''
