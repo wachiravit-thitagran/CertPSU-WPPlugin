@@ -1,52 +1,55 @@
-# Offline Jenkins CertPSU E2E simulation
+# Jenkins E2E: disposable WordPress + MySQL
 
-The root `Jenkinsfile` runs `tests/E2E/MockWordPressCertPSUE2ETest.php`
-on a regular Jenkins agent. This test uses existing WordPress-function stubs
-from `tests/bootstrap.php` and automatically creates mock data for a
-Tutor LMS course, learner, postmeta/usermeta, Action Scheduler queue and
-CertPSU API responses. There are **no staging or production connections**.
+The repository root `Jenkinsfile` provisions an isolated Docker Compose
+stack that runs **real WordPress, MySQL 8.0, Tutor LMS, CertPSU Connector
+and CertPSU TutorLMS Bridge**. Only external CertPSU API responses are
+mocked using a test-only WordPress MU plugin and a reserved `.invalid`
+hostname. Nothing talks to the private staging site or production CertPSU.
 
-## Jenkins job setup
+## Jenkins configuration
 
-- Create a **Pipeline from SCM** job with repository
-  `https://github.com/wachiravit-thitagran/CertPSU-WPPlugin.git`
-- Branch: `*/main`; script path: `Jenkinsfile`
-- Agent: any Linux agent with **Docker CLI + accessible Docker daemon**, curl and Git. PHP and Composer run inside the image built from `tests/E2E/Dockerfile`.
-- Docker needs permission to build and run images. On first build it downloads base images and Debian packages; the container also downloads Composer packages (unless you have internal mirrors/caches). Jenkins needs outbound HTTPS to GitHub API only if publishing statuses.
-- Install Jenkins **Pipeline** and **Credentials Binding** plugins.
-- Add a secret-text credential ID `github-certpsu-status-token` containing a
-  GitHub token scoped to this repository with **Commit statuses: Read/write**.
-  No GitHub Checks plugin is needed.
-- **No build parameters**. No `WP_ROOT`, `E2E_COURSE_ID`, `E2E_USER_ID`,
-  Docker, WordPress, MySQL, WP-CLI or CertPSU API key.
+Configure a multibranch or Pipeline from SCM job:
+- Repository: `https://github.com/wachiravit-thitagran/CertPSU-WPPlugin.git`
+- Branch: `main`; script path: `Jenkinsfile`
+- Jenkins agent: Linux with Docker Engine, Compose v2 plugin, Git and access
+  to the Docker daemon. PHP, MySQL, WP-CLI and Composer are **not**
+  required on the host.
+- Jenkins must be able to pull `mysql:8.0`, `wordpress:php8.3-apache`,
+  `wordpress:cli-php8.3`, `php:8.3-cli-bookworm`, and `composer:2`,
+  and download WordPress.org Tutor LMS, apt and Composer dependencies.
+  Use internal registries/package mirrors in network-isolated deployments.
+- Optional GitHub Commit Status: add Jenkins secret-text credential
+  `github-certpsu-status-token` with `Commit statuses: Read/write`.
+  Status context is `certpsu/wordpress-mysql-e2e` and status reporting is
+  best-effort (missing credentials do not prevent E2E).
+- No `WP_ROOT`, `E2E_COURSE_ID`, `E2E_USER_ID`, API keys or other
+  build parameters are needed.
 
-## Behavior
+## Steps
 
-Jenkins checks out the source, builds a PHP 8.3 Docker image, then runs `composer install` and PHPUnit **inside a temporary container** against the checked-out source. Tests cover:
-1. Enabled course-completion event enqueues the expected issuance job.
-2. Fake participant addition and certificate release populate learner state.
-3. Repeated handler processing is idempotent and does not call the API again.
-4. Disabled course does not enqueue issuance.
-5. API failure schedules retry and does not mark a certificate released.
+1. Build a disposable PHP/Composer image and create installable plugin ZIPs.
+2. Start isolated WordPress + MySQL containers.
+3. Install WordPress with an E2E-only admin and activate Tutor LMS and
+   both CertPSU plugins.
+4. Copy `certpsu-api-mock.php` into WordPress's MU plugins directory.
+5. Use WP-CLI to create a course and learner, fire the real Tutor LMS
+   completion hook and verify a queued Action Scheduler task.
+6. Run the real Action Scheduler runner and verify class/participant/release
+   state persisted to MySQL-backed WordPress user metadata.
+7. Replay the issuance handler to assert idempotency and verify the mock API
+   saw exactly three issuance requests.
+8. On every build result, collect Compose logs and run `down -v` to remove
+   disposable database and WordPress volumes.
 
-The GitHub Commit Status context is `certpsu/mock-e2e`, deliberately distinct
-from the real staging E2E status `certpsu/staging-e2e`.
-A JUnit XML artifact is archived for diagnostics; no certificate is issued.
+All test users, passwords, emails, and CertPSU IDs are synthetic.
 
-## Scope and limitations
+## Limitations
 
-This is a **mocked integration-flow test**, not an E2E test against a real
-WordPress runtime, database, background worker or the CertPSU service.
-Passing it proves the orchestrated plugin logic works against mocks; it
-**does not establish production readiness or real API compatibility**.
+This is a **container-based integration E2E** for WordPress and MySQL,
+not proof of connectivity to `cert.psu.ac.th`, email/PDF delivery or
+production approval workflows. The test fires the Tutor completion hook;
+it does not simulate browser-based lesson/quiz progression.
 
-The separate legacy `tests/e2e/staging.php` script remains available for
-a future explicitly configured staging job, but the root Jenkinsfile
-does not invoke it.
-
-## Troubleshooting
-
-- If `command -v docker` fails, install Docker on the Jenkins **agent** or run the job on a node that already supports containers. This does not require PHP on the host.
-- If `docker info` fails, grant the Jenkins agent user access to the Docker daemon through a controlled agent configuration; Docker daemon access is highly privileged. Prefer a dedicated isolated agent rather than granting broad access on shared machines.
-- If Docker image download/apt/Composer downloads fail, configure an internal registry and package mirrors. A completely air-gapped agent needs prebuilt/cached images and Composer dependencies.
-- Missing `github-certpsu-status-token` is non-blocking; to publish commit statuses, add a secret-text token with Commit statuses read/write. SCM/Branch Source may independently emit GitHub 403 until its own credential is fixed.
+If `docker info` fails, fix access on a **dedicated isolated Jenkins agent**.
+Access to the Docker daemon is highly privileged. If image or package
+downloads fail, use approved mirrors or cached images.
