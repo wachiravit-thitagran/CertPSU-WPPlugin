@@ -55,66 +55,84 @@ final class Create_Issuance_Service {
 		$external_id     = isset( $validated['external_id'] ) ? (string) $validated['external_id'] : '';
 		$idemp_mode      = isset( $validated['idempotency_mode'] ) ? (string) $validated['idempotency_mode'] : 'return_existing';
 
-		$existing = $this->issuances->find_latest_by_external_ref( $external_source, $external_id );
-		if ( $existing && 'return_existing' === $idemp_mode ) {
-			return new Issuance_Result( (int) $existing['id'], (string) $existing['status'], true, $external_source, $external_id, (int) $existing['participant_count'] );
+		// Serialize local creation from absence check through COMMIT. A site-wide
+		// claim preserves the database's historical reference collation semantics
+		// (including case/accent equivalence) without fragile key normalization.
+		// No remote request occurs here; always_create still creates a new row.
+		$scope = 'external-reference-creation';
+		if ( ! \CertPSU\Connector\Support\Database_Claim::acquire( $scope, 10 ) ) {
+			return new WP_Error( 'certpsu_reference_busy', 'This external reference is being processed. Retry the same request.' );
 		}
-		if ( $existing && 'fail_if_exists' === $idemp_mode ) {
-			return new WP_Error( 'certpsu_issuance_exists', 'An issuance already exists for this external reference.' );
+		try {
+
+			global $wpdb;
+			$wpdb->last_error = '';
+			$existing = $this->issuances->find_latest_by_external_ref( $external_source, $external_id );
+			if ( '' !== (string) $wpdb->last_error ) { // @phpstan-ignore-line -- Repository queries storage.
+				return new WP_Error( 'certpsu_reference_lookup_failed', 'Could not verify the external reference. Retry after repairing database access.' );
+			}
+			if ( $existing && 'return_existing' === $idemp_mode ) {
+				return new Issuance_Result( (int) $existing['id'], (string) $existing['status'], true, $external_source, $external_id, (int) $existing['participant_count'] );
+			}
+			if ( $existing && 'fail_if_exists' === $idemp_mode ) {
+				return new WP_Error( 'certpsu_issuance_exists', 'An issuance already exists for this external reference.' );
+			}
+
+			global $wpdb;
+			if ( false === $wpdb->query( 'START TRANSACTION' ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				return new WP_Error( 'certpsu_transaction_failed', 'Failed to start database transaction.' );
+			}
+
+			/**
+			 * Participants list.
+			 *
+			 * @var array<int,array<string,mixed>> $participants
+			 */
+			$participants = $validated['participants'] ?? array();
+
+			$issuance_id = $this->issuances->insert(
+				array(
+					'external_source'       => $external_source,
+					'external_id'           => $external_id,
+					'idempotency_key'       => $external_source . ':' . $external_id,
+					'idempotency_mode'      => $idemp_mode,
+					'status'                => 'queued',
+					'current_step'          => 'queued',
+					'auto_release'          => ( ! empty( $validated['auto_release'] ) ) ? 1 : 0,
+					'certpsu_config_json'   => Json::encode( is_array( $validated['certpsu'] ?? null ) ? $validated['certpsu'] : array() ),
+					'class_payload_json'    => Json::encode( is_array( $validated['class'] ?? null ) ? $validated['class'] : array() ),
+					'template_payload_json' => Json::encode( is_array( $validated['certificate_template'] ?? null ) ? $validated['certificate_template'] : array() ),
+					'participant_count'     => count( $participants ),
+				)
+			);
+
+			if ( $issuance_id < 1 ) {
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				return new WP_Error( 'certpsu_db_insert_failed', 'Failed to insert issuance row.' );
+			}
+
+			$certificate_result = $this->certificates->insert_many( $issuance_id, $participants );
+			if ( is_wp_error( $certificate_result ) ) {
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				return $certificate_result;
+			}
+
+			if ( ! $this->queue->enqueue_process_issuance( $issuance_id ) ) {
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				return new WP_Error( 'certpsu_queue_failed', 'Failed to enqueue issuance workflow.' );
+			}
+
+			if ( false === $wpdb->query( 'COMMIT' ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				return new WP_Error( 'certpsu_commit_failed', 'Failed to commit issuance transaction.' );
+			}
+
+			do_action( 'certpsu_issuance_created', array( 'id' => $issuance_id ) );
+			do_action( 'certpsu_issuance_queued', array( 'id' => $issuance_id ) );
+
+			return new Issuance_Result( $issuance_id, 'queued', false, $external_source, $external_id, count( $participants ) );
+		} finally {
+			\CertPSU\Connector\Support\Database_Claim::release( $scope );
 		}
-
-		global $wpdb;
-		if ( false === $wpdb->query( 'START TRANSACTION' ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			return new WP_Error( 'certpsu_transaction_failed', 'Failed to start database transaction.' );
-		}
-
-		/**
-		 * Participants list.
-		 *
-		 * @var array<int,array<string,mixed>> $participants
-		 */
-		$participants = $validated['participants'] ?? array();
-
-		$issuance_id = $this->issuances->insert(
-			array(
-				'external_source'       => $external_source,
-				'external_id'           => $external_id,
-				'idempotency_key'       => $external_source . ':' . $external_id,
-				'idempotency_mode'      => $idemp_mode,
-				'status'                => 'queued',
-				'current_step'          => 'queued',
-				'auto_release'          => ( ! empty( $validated['auto_release'] ) ) ? 1 : 0,
-				'certpsu_config_json'   => Json::encode( is_array( $validated['certpsu'] ?? null ) ? $validated['certpsu'] : array() ),
-				'class_payload_json'    => Json::encode( is_array( $validated['class'] ?? null ) ? $validated['class'] : array() ),
-				'template_payload_json' => Json::encode( is_array( $validated['certificate_template'] ?? null ) ? $validated['certificate_template'] : array() ),
-				'participant_count'     => count( $participants ),
-			)
-		);
-
-		if ( $issuance_id < 1 ) {
-			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			return new WP_Error( 'certpsu_db_insert_failed', 'Failed to insert issuance row.' );
-		}
-
-		$certificate_result = $this->certificates->insert_many( $issuance_id, $participants );
-		if ( is_wp_error( $certificate_result ) ) {
-			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			return $certificate_result;
-		}
-
-		if ( ! $this->queue->enqueue_process_issuance( $issuance_id ) ) {
-			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			return new WP_Error( 'certpsu_queue_failed', 'Failed to enqueue issuance workflow.' );
-		}
-
-		if ( false === $wpdb->query( 'COMMIT' ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			return new WP_Error( 'certpsu_commit_failed', 'Failed to commit issuance transaction.' );
-		}
-
-		do_action( 'certpsu_issuance_created', array( 'id' => $issuance_id ) );
-		do_action( 'certpsu_issuance_queued', array( 'id' => $issuance_id ) );
-
-		return new Issuance_Result( $issuance_id, 'queued', false, $external_source, $external_id, count( $participants ) );
 	}
 }

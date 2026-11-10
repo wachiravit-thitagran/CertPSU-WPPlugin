@@ -38,31 +38,65 @@ final class Process_Issuance_Workflow_Service {
 	 * @return void
 	 */
 	public function handle( int $issuance_id ): void {
+		if ( ! $this->issuances->acquire_worker_claim( $issuance_id ) ) {
+			if ( ! $this->queue->schedule_process_issuance( $issuance_id, 30 ) ) {
+				throw new \RuntimeException( 'CertPSU process claim is busy and deferred delivery could not be scheduled.' );
+			}
+			return;
+		}
+		try {
+			$this->process( $issuance_id );
+		} finally {
+			$this->issuances->release_worker_claim( $issuance_id );
+		}
+	}
+
+	private function process( int $issuance_id ): void {
 		$issuance = $this->issuances->find_by_id( $issuance_id );
-		if ( ! $issuance ) {
+		if ( ! $issuance || ! in_array( $issuance['status'], array( 'queued', 'processing', 'failed' ), true )
+			|| 'remote_outcome_unknown' === ( $issuance['last_error_code'] ?? '' )
+			|| ( 'failed' === $issuance['status'] && ! in_array( $issuance['failed_step'] ?? '', array( 'create_class', 'add_participants' ), true ) ) ) {
 			return;
 		}
 
-		$class_response = $this->client->create_class( $this->build_create_class_body( $issuance ) );
-		if ( ! $class_response->success ) {
-			$this->issuances->mark_failed( $issuance_id, 'create_class', $class_response->error_code, $class_response->error_message );
-			do_action( 'certpsu_issuance_failed', $this->issuances->find_by_id( $issuance_id ) );
-			return;
+		$class_id = (string) ( $issuance['certpsu_class_id'] ?? '' );
+		if ( '' === $class_id ) {
+			if ( ! $this->issuances->mark_remote_outcome_unknown( $issuance_id, 'create_class' ) ) {
+				return;
+			}
+			$class_response = $this->client->create_class( $this->build_create_class_body( $issuance ) );
+			if ( ! $class_response->success ) {
+				$this->record_failure( $issuance_id, 'create_class', $class_response );
+				return;
+			}
+			$class_id = (string) ( $class_response->data['id'] ?? '' );
+			if ( '' === trim( $class_id ) || ! $this->issuances->save_workflow_checkpoint( $issuance_id, array(
+				'certpsu_class_id' => $class_id, 'current_step' => 'create_class', 'status' => 'processing',
+				'failed_step' => null, 'last_error_code' => null, 'last_error_message' => null,
+			) ) ) {
+				return;
+			}
+			do_action( 'certpsu_issuance_class_created', $this->issuances->find_by_id( $issuance_id ) );
 		}
 
-		$class_id = (string) ( $class_response->data['id'] ?? '' );
-		$this->issuances->mark_class_created( $issuance_id, $class_id );
-		do_action( 'certpsu_issuance_class_created', $this->issuances->find_by_id( $issuance_id ) );
-
-		$participants_response = $this->client->add_participants( $class_id, array( 'participants' => $this->certificates->build_participants_payload( $issuance_id ) ) );
-		if ( ! $participants_response->success ) {
-			$this->issuances->mark_failed( $issuance_id, 'add_participants', $participants_response->error_code, $participants_response->error_message );
-			return;
+		if ( 'add_participants' !== ( $issuance['current_step'] ?? '' ) ) {
+			if ( ! $this->issuances->mark_remote_outcome_unknown( $issuance_id, 'add_participants' ) ) {
+				return;
+			}
+			$participants_response = $this->client->add_participants( $class_id, array( 'participants' => $this->certificates->build_participants_payload( $issuance_id ) ) );
+			if ( ! $participants_response->success ) {
+				$this->record_failure( $issuance_id, 'add_participants', $participants_response );
+				return;
+			}
+			if ( ! $this->issuances->save_workflow_checkpoint( $issuance_id, array(
+				'current_step' => 'add_participants', 'status' => 'processing',
+				'failed_step' => null, 'last_error_code' => null, 'last_error_message' => null,
+			) ) ) {
+				return;
+			}
+			$this->certificates->mark_all_for_issuance( $issuance_id, 'added_to_certpsu' );
+			do_action( 'certpsu_issuance_participants_added', $this->issuances->find_by_id( $issuance_id ) );
 		}
-
-		$this->certificates->mark_all_for_issuance( $issuance_id, 'added_to_certpsu' );
-		$this->issuances->mark_participants_added( $issuance_id );
-		do_action( 'certpsu_issuance_participants_added', $this->issuances->find_by_id( $issuance_id ) );
 
 		if ( 0 === (int) $issuance['auto_release'] ) {
 			$this->issuances->mark_waiting_for_release( $issuance_id );
@@ -70,7 +104,18 @@ final class Process_Issuance_Workflow_Service {
 			return;
 		}
 
-		$this->queue->enqueue_release_issuance( $issuance_id );
+		if ( ! $this->queue->enqueue_release_issuance( $issuance_id ) ) {
+			$this->issuances->mark_failed( $issuance_id, 'release', 'queue_failed', 'Release could not be scheduled. Retry this failed step to resume from the saved participant checkpoint.' );
+		}
+	}
+
+	private function record_failure( int $id, string $step, \CertPSU\Connector\CertPSU\Api_Response $response ): void {
+		// Only a definite client rejection is replayable. Timeouts, conflicts and
+		// server errors may have happened after the provider accepted the write.
+		if ( $response->status_code >= 400 && $response->status_code < 500 && ! in_array( $response->status_code, array( 408, 409 ), true ) ) {
+			$this->issuances->mark_failed( $id, $step, $response->error_code, $response->error_message );
+		}
+		do_action( 'certpsu_issuance_failed', $this->issuances->find_by_id( $id ) );
 	}
 
 	/**

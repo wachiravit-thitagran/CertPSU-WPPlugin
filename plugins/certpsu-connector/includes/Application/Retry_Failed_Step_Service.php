@@ -33,17 +33,24 @@ final class Retry_Failed_Step_Service {
 	 */
 	public function handle( int $issuance_id ): void {
 		$issuance = $this->issuances->find_by_id( $issuance_id );
-		if ( ! $issuance || empty( $issuance['failed_step'] ) ) {
+		if ( ! $issuance || empty( $issuance['failed_step'] )
+			|| 'remote_outcome_unknown' === ( $issuance['last_error_code'] ?? '' )
+			|| ( 'poll_urls' === ( $issuance['current_step'] ?? '' ) && (int) ( $issuance['poll_attempt_count'] ?? 0 ) >= 60 )
+			|| in_array( $issuance['status'] ?? '', array( 'completed', 'partially_completed', 'released' ), true ) ) {
 			return;
 		}
 
 		$failed_step = (string) $issuance['failed_step'];
 		if ( 'release' === $failed_step ) {
-			$this->queue->enqueue_release_issuance( $issuance_id );
+			$scheduled = $this->queue->enqueue_release_issuance( $issuance_id );
 		} elseif ( 'poll_urls' === $failed_step ) {
-			$this->queue->enqueue_refetch_certificate_urls( $issuance_id );
+			$scheduled = $this->queue->enqueue_refetch_certificate_urls( $issuance_id );
 		} else {
-			$this->queue->enqueue_process_issuance( $issuance_id );
+			$scheduled = $this->queue->enqueue_process_issuance( $issuance_id );
+		}
+		if ( ! $scheduled ) {
+			$this->issuances->mark_failed( $issuance_id, $failed_step, 'queue_failed', 'Retry could not be scheduled. The saved workflow checkpoint is preserved; retry once scheduling is available.' );
+			throw new \RuntimeException( 'CertPSU retry could not be scheduled.' );
 		}
 	}
 }

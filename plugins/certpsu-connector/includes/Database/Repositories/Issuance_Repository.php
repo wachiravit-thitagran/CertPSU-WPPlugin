@@ -14,6 +14,58 @@ namespace CertPSU\Connector\Database\Repositories;
  */
 class Issuance_Repository {
 
+	/** @var array<string,bool> Connection-owned claims; prevent request re-entry. */
+	private static array $worker_claims = array();
+
+	private function worker_claim_name( int $id ): string {
+		global $wpdb;
+		return 'certpsu:' . hash( 'sha1', ( defined( 'DB_NAME' ) ? DB_NAME : '' ) . ':' . $wpdb->prefix . ':' . $id );
+	}
+
+	/** Fail closed if MySQL cannot atomically grant this issuance claim. */
+	public function acquire_worker_claim( int $id ): bool {
+		global $wpdb;
+		$name = $this->worker_claim_name( $id );
+		if ( isset( self::$worker_claims[ $name ] ) ) {
+			return false;
+		}
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $name ) ) ) {
+			return false;
+		}
+		self::$worker_claims[ $name ] = true;
+		return true;
+	}
+
+	/** Only the owning connection can release; disconnect also releases it. */
+	public function release_worker_claim( int $id ): void {
+		global $wpdb;
+		$name = $this->worker_claim_name( $id );
+		if ( isset( self::$worker_claims[ $name ] ) ) {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $name ) );
+			unset( self::$worker_claims[ $name ] );
+		}
+	}
+
+	/** Persist a checkpoint and confirm it before the next remote mutation. */
+	public function save_workflow_checkpoint( int $id, array $data ): bool {
+		global $wpdb;
+		$data['updated_at'] = current_time( 'mysql', true );
+		return 1 === $wpdb->update( $wpdb->prefix . 'certpsu_issuances', $data, array( 'id' => $id ) );
+	}
+
+	/**
+	 * Persist uncertainty BEFORE sending a non-idempotent request. A crash or
+	 * timeout must never turn an accepted remote write into an automatic replay.
+	 */
+	public function mark_remote_outcome_unknown( int $id, string $step ): bool {
+		return $this->save_workflow_checkpoint( $id, array(
+			'status' => 'failed',
+			'failed_step' => $step,
+			'last_error_code' => 'remote_outcome_unknown',
+			'last_error_message' => 'Remote outcome is unknown. An administrator must reconcile this step with CertPSU before retrying; automatic replay is blocked.',
+		) );
+	}
+
 	/**
 	 * Insert issuance.
 	 *

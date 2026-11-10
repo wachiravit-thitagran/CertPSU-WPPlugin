@@ -38,8 +38,24 @@ final class Refetch_Certificate_Urls_Service {
 	 * @return void
 	 */
 	public function handle( int $issuance_id ): void {
+		if ( ! $this->issuances->acquire_worker_claim( $issuance_id ) ) {
+			if ( ! $this->queue->schedule_poll_certificate_urls( $issuance_id, 30 ) ) {
+				throw new \RuntimeException( 'CertPSU poll claim is busy and deferred delivery could not be scheduled.' );
+			}
+			return;
+		}
+		try {
+			$this->poll( $issuance_id );
+		} finally {
+			$this->issuances->release_worker_claim( $issuance_id );
+		}
+	}
+
+	private function poll( int $issuance_id ): void {
 		$issuance = $this->issuances->find_by_id( $issuance_id );
-		if ( ! $issuance || empty( $issuance['certpsu_class_id'] ) ) {
+		if ( ! $issuance || empty( $issuance['certpsu_class_id'] )
+			|| ( 'poll_urls' === ( $issuance['current_step'] ?? '' ) && (int) ( $issuance['poll_attempt_count'] ?? 0 ) >= 60 )
+			|| ! ( 'released' === $issuance['status'] || ( 'failed' === $issuance['status'] && 'poll_urls' === ( $issuance['failed_step'] ?? '' ) ) ) ) {
 			return;
 		}
 
@@ -52,7 +68,12 @@ final class Refetch_Certificate_Urls_Service {
 		$participants = $this->normalizer->normalize( $response->data ?? array() );
 		$summary      = $this->certificates->sync_urls_from_certpsu( $issuance_id, $participants );
 
-		if ( $summary['ready_count'] === $summary['participant_count'] ) {
+		if ( is_wp_error( $summary ) ) {
+			$this->issuances->mark_failed( $issuance_id, 'poll_urls', $summary->get_error_code(), $summary->get_error_message() );
+			return;
+		}
+
+		if ( $summary['participant_count'] > 0 && $summary['participant_count'] === (int) ( $issuance['participant_count'] ?? 0 ) && $summary['ready_count'] === $summary['participant_count'] ) {
 			$this->issuances->mark_completed( $issuance_id );
 			do_action( 'certpsu_issuance_completed', $this->issuances->find_by_id( $issuance_id ) );
 			return;
@@ -65,6 +86,8 @@ final class Refetch_Certificate_Urls_Service {
 		}
 
 		$this->issuances->increment_poll_attempts( $issuance_id );
-		$this->queue->schedule_poll_certificate_urls( $issuance_id, 120 );
+		if ( ! $this->queue->schedule_poll_certificate_urls( $issuance_id, 120 ) ) {
+			$this->issuances->mark_failed( $issuance_id, 'poll_urls', 'queue_failed', 'Certificate polling could not be scheduled. Retry this failed step to resume polling without replaying release.' );
+		}
 	}
 }
