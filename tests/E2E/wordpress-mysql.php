@@ -102,8 +102,7 @@ if (!$queued) {
 }
 WP_CLI::log('Tutor LMS completion queued an Action Scheduler job');
 ActionScheduler::runner()->run('certpsu-tutorlms');
-$state = get_user_meta($user_id, '_certpsu_tutorlms_issued', true);
-$record = is_array($state) ? ($state[$course_id] ?? array()) : array();
+$record = (new \CertPSU\TutorLMS\Issuance\Learner_State_Repository())->get($user_id, $course_id);
 if (empty($record['released']) ||
     empty($record['class_id']) || empty($record['participant_id'])) {
     $fail('CertPSU issuance not released/persisted: ' . wp_json_encode($record));
@@ -114,8 +113,8 @@ if ($mode === 'mock' && count($calls) !== 3) {
 }
 $prior_state = $record;
 do_action('certpsu_tutorlms_issue', array('course_id' => $course_id, 'user_id' => $user_id, 'attempt' => 1));
-$after = get_user_meta($user_id, '_certpsu_tutorlms_issued', true);
-if (($after[$course_id] ?? array()) !== $prior_state) {
+$after = (new \CertPSU\TutorLMS\Issuance\Learner_State_Repository())->get($user_id, $course_id);
+if ($after !== $prior_state) {
     $fail('Idempotency failed: certificate state changed after replay');
 }
 if ($mode === 'mock' && get_option('certpsu_e2e_api_calls', array()) !== $calls) {

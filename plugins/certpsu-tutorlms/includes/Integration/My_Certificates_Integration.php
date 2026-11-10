@@ -31,7 +31,7 @@ final class My_Certificates_Integration {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function inject_tutorlms_certificates( array $certs, int $user_id ): array {
-		$issued_state = get_user_meta( $user_id, '_certpsu_tutorlms_issued', true );
+		$issued_state = ( new \CertPSU\TutorLMS\Issuance\Learner_State_Repository() )->for_user( $user_id );
 		if ( ! is_array( $issued_state ) || empty( $issued_state ) ) {
 			return $certs;
 		}

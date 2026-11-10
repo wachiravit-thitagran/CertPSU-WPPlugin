@@ -30,7 +30,10 @@ if ( ! $course || 'courses' !== $course->post_type || 0 !== strpos( $course->pos
 if ( ! $user || 0 !== strpos( $user->user_login, 'e2e-certpsu' ) ) {
     WP_CLI::error( 'Use a dedicated learner with login prefix e2e-certpsu.' );
 }
-if ( ! function_exists( 'is_plugin_active' ) ) {\n    require_once ABSPATH . 'wp-admin/includes/plugin.php';\n}\nif ( ! is_plugin_active( 'certpsu-connector/certpsu-connector.php' ) ||
+if ( ! function_exists( 'is_plugin_active' ) ) {
+    require_once ABSPATH . 'wp-admin/includes/plugin.php';
+}
+if ( ! is_plugin_active( 'certpsu-connector/certpsu-connector.php' ) ||
      ! is_plugin_active( 'certpsu-tutorlms/certpsu-tutorlms.php' ) ||
      ! is_plugin_active( 'tutor/tutor.php' ) ) {
     WP_CLI::error( 'Connector, TutorLMS bridge, and Tutor LMS must be active.' );
@@ -45,9 +48,7 @@ if ( empty( $settings['enabled'] ) || empty( $settings['auto_release'] ) || empt
 }
 
 $state_for = static function () use ( $user_id, $course_id ): array {
-    $all = get_user_meta( $user_id, '_certpsu_tutorlms_issued', true );
-    return is_array( $all ) && isset( $all[ $course_id ] ) && is_array( $all[ $course_id ] )
-        ? $all[ $course_id ] : array();
+    return ( new \CertPSU\TutorLMS\Issuance\Learner_State_Repository() )->get( $user_id, $course_id );
 };
 
 switch ( $phase ) {

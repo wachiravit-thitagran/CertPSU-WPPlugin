@@ -85,8 +85,14 @@ class Issuances_List_Table extends \WP_List_Table {
 	 */
 	public function column_default( $item, $column_name ): string {
 		switch ( $column_name ) {
-			case 'id':
 			case 'status':
+				$status = esc_html( (string) ( $item['status'] ?? '' ) );
+				if ( 'remote_outcome_unknown' === ( $item['last_error_code'] ?? '' ) ) {
+					$status .= '<br><strong>' . esc_html( 'remote_outcome_unknown: ' . ( $item['failed_step'] ?? '' ) ) . '</strong>';
+					$status .= '<br>' . esc_html( (string) ( $item['last_error_message'] ?? '' ) );
+				}
+				return $status;
+			case 'id':
 			case 'created_at':
 			case 'updated_at':
 			case 'participant_email':

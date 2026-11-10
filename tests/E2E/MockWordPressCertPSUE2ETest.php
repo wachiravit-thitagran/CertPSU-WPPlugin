@@ -84,7 +84,7 @@ final class MockWordPressCertPSUE2ETest extends TestCase {
         $handler = $this->fakeHandler($api);
         $handler->handle($queue[0]['args'][0]);
 
-        $record = $GLOBALS['mock_user_meta'][self::USER_ID]['_certpsu_tutorlms_issued'][self::COURSE_ID] ?? array();
+        $record = (new \CertPSU\TutorLMS\Issuance\Learner_State_Repository())->get(self::USER_ID,self::COURSE_ID);
         self::assertTrue($record['released'] ?? false);
         self::assertSame('fixture-class-001', $record['class_id']);
         self::assertSame('fixture-participant-001', $record['participant_id']);

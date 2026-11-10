@@ -71,11 +71,26 @@ if ( ! function_exists( 'certpsu' ) ) {
 
 class Mock_WPDB {
 	public $prefix = 'wp_';
+	public $options = 'wp_options';
+	public $last_error = '';
 	public $insert_id = 1;
 	public $last_query = '';
 	public $last_table = '';
 	public $last_data = array();
 	
+	public function prepare( $sql, ...$args ) {
+		foreach ( $args as $arg ) { $sql = preg_replace( '/%[sd]/', is_int( $arg ) ? (string) $arg : "'" . $arg . "'", $sql, 1 ); }
+		return $sql;
+	}
+	public function get_var( $sql ) { return 1; }
+	public function esc_like( $s ) { return addcslashes( $s, '_%\\' ); }
+	public function get_col( $sql ) {
+
+		preg_match( '/certpsu.*?([0-9]+).*?%/', $sql, $m );
+		$prefix = 'certpsu_learner_' . ( $m[1] ?? '' ) . '_';
+		return array_values( array_filter( array_keys( $GLOBALS['mock_options'] ?? array() ), static fn( $key ) => str_starts_with( $key, $prefix ) ) );
+	}
+
 	public function insert( $table, $data, $format = null ) {
 		$this->last_table = $table;
 		$this->last_data = $data;
@@ -261,14 +276,14 @@ if ( ! function_exists( 'get_current_user_id' ) ) {
 if ( ! function_exists( 'as_enqueue_async_action' ) ) {
 	function as_enqueue_async_action( $hook, $args = array(), $group = '' ) {
 		$GLOBALS['mock_async_actions'][] = array( 'hook' => $hook, 'args' => $args, 'group' => $group );
-		return 123;
+		return $GLOBALS['mock_async_result'] ?? 123;
 	}
 }
 
 if ( ! function_exists( 'as_schedule_single_action' ) ) {
 	function as_schedule_single_action( $timestamp, $hook, $args = array(), $group = '' ) {
 		$GLOBALS['mock_scheduled_actions'][] = array( 'timestamp' => $timestamp, 'hook' => $hook, 'args' => $args, 'group' => $group );
-		return 124;
+		return $GLOBALS['mock_schedule_result'] ?? 124;
 	}
 }
 
@@ -652,3 +667,9 @@ if ( ! function_exists( 'get_plugin_data' ) ) {
 	}
 }
 
+
+if ( ! function_exists( 'wp_cache_delete' ) ) { function wp_cache_delete( $key, $group = '' ) { return true; } }
+if ( ! function_exists( 'is_multisite' ) ) { function is_multisite() { return false; } }
+if ( ! function_exists( 'add_option' ) ) { function add_option( $key, $value, $deprecated = '', $autoload = false ) { if ( isset( $GLOBALS['mock_options'][$key] ) ) { return false; } $GLOBALS['mock_options'][$key] = $value; return true; } }
+if ( ! function_exists( 'update_option' ) ) { function update_option( $key, $value, $autoload = false ) { $GLOBALS['mock_options'][$key] = $value; return true; } }
+if ( ! function_exists( 'delete_option' ) ) { function delete_option( $key ) { unset( $GLOBALS['mock_options'][$key] ); return true; } }

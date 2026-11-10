@@ -20,7 +20,7 @@ final class WorkflowJobTest extends TestCase {
 	 * Setup.
 	 */
 	protected function setUp(): void {
-		if ( ! function_exists( 'certpsu' ) ) {
+		if ( ! defined( 'WPINC' ) || ! function_exists( 'certpsu' ) ) {
 			self::markTestSkipped( 'Integration tests require WordPress.' );
 		}
 	}
@@ -154,6 +154,7 @@ final class WorkflowJobTest extends TestCase {
 		);
 
 		$service->handle( $issuance->issuance_id );
+		certpsu()->container()->get( 'release_issuance_service' )->handle( $issuance->issuance_id );
 
 		/**
 		 * Stored issuance.

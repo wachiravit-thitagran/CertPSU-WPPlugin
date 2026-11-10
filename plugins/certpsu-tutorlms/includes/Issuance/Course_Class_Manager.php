@@ -64,24 +64,40 @@ final class Course_Class_Manager {
 			return new WP_Error( 'certpsu_connector_inactive', 'CertPSU Connector is not active.' );
 		}
 
-		// Guard against two completions creating the class concurrently.
-		$lock_key = 'certpsu_class_lock_' . $course_id;
-		if ( false !== get_transient( $lock_key ) ) {
+		$scope = 'course-class:' . $course_id;
+		if ( ! \CertPSU\Connector\Support\Database_Claim::acquire( $scope ) ) {
 			return new WP_Error( 'certpsu_class_locked', 'Class creation already in progress; will retry.' );
 		}
-		set_transient( $lock_key, 1, 2 * MINUTE_IN_SECONDS );
+		$journal_key = 'certpsu_class_checkpoint_' . $course_id;
 
 		try {
-			// Re-check after acquiring the lock.
+			// Re-check fresh storage after acquiring the lock.
+			wp_cache_delete( $course_id, 'post_meta' );
+			wp_cache_delete( $journal_key, 'options' );
+			wp_cache_delete( 'notoptions', 'options' );
 			$existing = $this->class_id( $course_id );
 			if ( '' !== $existing ) {
 				return $existing;
 			}
 
+			// A durable pre-call marker prevents replay after timeout/crash. A saved
+			// remote ID also repairs local postmeta failure without another create.
+			$checkpoint = get_option( $journal_key, array() );
+			if ( is_array( $checkpoint ) && ! empty( $checkpoint['class_id'] ) ) {
+				$class_id = (string) $checkpoint['class_id'];
+				update_post_meta( $course_id, self::CLASS_ID_META, $class_id );
+				return $this->class_id( $course_id ) === $class_id ? $class_id : new WP_Error( 'certpsu_class_persist_failed', 'Saved remote class needs local persistence repair.' );
+			}
+			if ( ! empty( $checkpoint ) || ! add_option( $journal_key, array( 'outcome' => 'unknown' ), '', false ) ) {
+				return new WP_Error( 'certpsu_class_outcome_unknown', 'Class creation outcome needs administrator reconciliation before retry.' );
+			}
 			$body     = $this->payload_builder->build( $course_id, $settings );
 			$response = certpsu()->api()->create_class( $body );
 
 			if ( ! $response->success ) {
+				if ( $response->status_code >= 400 && $response->status_code < 500 && ! in_array( $response->status_code, array( 408, 409 ), true ) ) {
+					delete_option( $journal_key );
+				}
 				return new WP_Error(
 					$response->error_code ?: 'certpsu_create_class_failed',
 					$response->error_message ?: 'Failed to create CertPSU class.'
@@ -93,7 +109,14 @@ final class Course_Class_Manager {
 				return new WP_Error( 'certpsu_create_class_no_id', 'CertPSU did not return a class id.' );
 			}
 
+			update_option( $journal_key, array( 'class_id' => $class_id ), false );
+			if ( get_option( $journal_key ) !== array( 'class_id' => $class_id ) ) {
+				return new WP_Error( 'certpsu_class_checkpoint_failed', 'Remote class created but checkpoint could not be saved; reconcile before retry.' );
+			}
 			update_post_meta( $course_id, self::CLASS_ID_META, $class_id );
+			if ( $this->class_id( $course_id ) !== $class_id ) {
+				return new WP_Error( 'certpsu_class_persist_failed', 'Remote class checkpoint saved; retry to repair course metadata.' );
+			}
 			update_post_meta( $course_id, self::CREATED_AT_META, gmdate( 'Y-m-d H:i:s' ) );
 
 			/**
@@ -106,7 +129,7 @@ final class Course_Class_Manager {
 
 			return $class_id;
 		} finally {
-			delete_transient( $lock_key );
+			\CertPSU\Connector\Support\Database_Claim::release( $scope );
 		}
 	}
 

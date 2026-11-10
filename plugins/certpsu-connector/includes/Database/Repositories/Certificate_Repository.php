@@ -133,67 +133,76 @@ final class Certificate_Repository {
 	 *
 	 * @param int                            $issuance_id Issuance ID.
 	 * @param array<int,array<string,mixed>> $participants API Participants.
-	 * @return array{ready_count:int,participant_count:int}
+	 * @return array{ready_count:int,participant_count:int}|WP_Error
 	 */
-	public function sync_urls_from_certpsu( int $issuance_id, array $participants ): array {
+	public function sync_urls_from_certpsu( int $issuance_id, array $participants ): array|WP_Error {
 		global $wpdb;
-
-		$ready_count = 0;
-		$total       = 0;
-
 		$table = $wpdb->prefix . 'certpsu_certificates';
-
+		$query = $wpdb->prepare( "SELECT id, email, status, certpsu_certificate_id, certificate_url FROM {$table} WHERE issuance_id = %d", $issuance_id );
+		$rows  = $wpdb->get_results( $query, 'ARRAY_A' );
+		if ( ! is_array( $rows ) || '' !== (string) $wpdb->last_error ) {
+			return new WP_Error( 'certpsu_read_failed', 'Could not read expected certificate participants.' );
+		}
+		$known = array();
+		foreach ( $rows as $row ) {
+			$known[ strtolower( (string) $row['email'] ) ] = (int) $row['id'];
+		}
 		foreach ( $participants as $participant ) {
-			// Reconcile by email: it is unique within an issuance (the validator
-			// rejects duplicate participant emails before enqueue) and is the only
-			// stable key we share with API v2, which generates participant ids itself.
-			$email          = isset( $participant['email'] ) ? (string) $participant['email'] : '';
-			$participant_id = $participant['id'] ?? null;
-			$cert           = $participant['certificate_id'] ?? null;
-			$url            = $participant['certificate_url'] ?? null;
-
-			if ( '' === $email ) {
+			$email = strtolower( trim( (string) ( $participant['email'] ?? '' ) ) );
+			if ( '' === $email || ! isset( $known[ $email ] ) ) {
+				return new WP_Error( 'certpsu_unexpected_participant', 'Certificate response contained an unknown or missing participant identity.' );
+			}
+			$cert = $participant['certificate_id'] ?? '';
+			$url  = $participant['certificate_url'] ?? '';
+			if ( ! $cert || ! $url ) {
 				continue;
 			}
-
-			++$total;
-
-			if ( $cert && $url ) {
-				$data = array(
-					'certpsu_certificate_id' => $cert,
-					'certificate_url'        => $url,
-					'status'                 => 'ready',
-					'ready_at'               => current_time( 'mysql', true ),
-					'updated_at'             => current_time( 'mysql', true ),
-				);
-				if ( $participant_id ) {
-					$data['certpsu_participant_id'] = $participant_id;
-				}
-
-				$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-					$table,
-					$data,
-					array(
-						'issuance_id' => $issuance_id,
-						'email'       => $email,
-					)
-				);
+			$data = array(
+				'certpsu_certificate_id' => $cert,
+				'certificate_url'        => $url,
+				'status'                 => 'ready',
+				'ready_at'               => current_time( 'mysql', true ),
+				'updated_at'             => current_time( 'mysql', true ),
+			);
+			if ( ! empty( $participant['id'] ) ) {
+				$data['certpsu_participant_id'] = $participant['id'];
+			}
+			if ( false === $wpdb->update(
+				$table,
+				$data,
+				array(
+					'id'          => $known[ $email ],
+					'issuance_id' => $issuance_id,
+				)
+			) ) {
+				return new WP_Error( 'certpsu_url_update_failed', 'Could not persist a participant certificate URL. Polling can be retried safely.' );
+			}
+		}
+		// Count only successfully persisted local rows, including earlier polls.
+		$wpdb->last_error = '';
+		$persisted        = $wpdb->get_results( $query, 'ARRAY_A' );
+		if ( ! is_array( $persisted ) || '' !== (string) $wpdb->last_error ) { // @phpstan-ignore-line -- wpdb mutates last_error during query.
+			return new WP_Error( 'certpsu_read_failed', 'Could not verify persisted certificate URLs.' );
+		}
+		$ready_count = 0;
+		foreach ( $persisted as $row ) {
+			if ( 'ready' === $row['status'] && ! empty( $row['certificate_url'] ) && ! empty( $row['certpsu_certificate_id'] ) ) {
 				++$ready_count;
 			}
 		}
-
-		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( false === $wpdb->update(
 			$wpdb->prefix . 'certpsu_issuances',
 			array(
 				'ready_count' => $ready_count,
 				'updated_at'  => current_time( 'mysql', true ),
 			),
 			array( 'id' => $issuance_id )
-		);
-
+		) ) {
+			return new WP_Error( 'certpsu_summary_update_failed', 'Could not persist certificate readiness.' );
+		}
 		return array(
 			'ready_count'       => $ready_count,
-			'participant_count' => $total,
+			'participant_count' => count( $persisted ),
 		);
 	}
 

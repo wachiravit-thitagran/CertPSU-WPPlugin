@@ -26,6 +26,7 @@ class CompletionHandlerTest extends TestCase {
 		$GLOBALS['mock_certpsu_api'] = $this->api;
 		$GLOBALS['mock_post_meta'] = array();
 		$GLOBALS['mock_user_meta'] = array();
+		$GLOBALS['mock_options'] = array();
 		$GLOBALS['mock_scheduled_actions'] = array();
 	}
 
@@ -76,8 +77,8 @@ class CompletionHandlerTest extends TestCase {
 
 		$handler->handle( array( 'course_id' => 123, 'user_id' => 456 ) );
 
-		$this->assertNotEmpty( $GLOBALS['mock_user_meta'][456]['_certpsu_tutorlms_issued'][123] );
-		$state = $GLOBALS['mock_user_meta'][456]['_certpsu_tutorlms_issued'][123];
+		$this->assertNotEmpty( get_option( 'certpsu_learner_456_123' ) );
+		$state = get_option( 'certpsu_learner_456_123' );
 		$this->assertTrue( $state['released'] );
 		$this->assertSame( 'part_1', $state['participant_id'] );
 		$this->assertSame( 'https://cert.com/123', $state['certificate_url'] );

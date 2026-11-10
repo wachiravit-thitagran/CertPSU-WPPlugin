@@ -13,6 +13,7 @@ class MyCertificatesIntegrationTest extends TestCase {
 		$GLOBALS['mock_filters'] = array();
 		$GLOBALS['mock_user_meta'] = array();
 		$GLOBALS['mock_post_titles'] = array();
+		$GLOBALS['mock_options'] = array();
 	}
 
 	public function test_register_hooks(): void {
@@ -36,8 +37,10 @@ class MyCertificatesIntegrationTest extends TestCase {
 		$certs = array( array( 'id' => '1', 'title' => 'Original' ) );
 
 		$GLOBALS['mock_post_titles'][99] = 'Tutor Course';
+		$GLOBALS['mock_post_meta'][99]['_certpsu_class_id'] = 'class-99';
 		$GLOBALS['mock_user_meta'][123]['_certpsu_tutorlms_issued'] = array(
 			99 => array(
+				'class_id' => 'class-99',
 				'released' => true,
 				'participant_id' => 'part_123',
 				'certificate_url' => 'https://cert.com',

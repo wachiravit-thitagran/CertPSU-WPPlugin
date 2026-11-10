@@ -35,11 +35,6 @@ final class Release_Sync_Handler {
 	public const GROUP = 'certpsu-tutorlms';
 
 	/**
-	 * User meta key holding per-course issuance state.
-	 */
-	private const ISSUED_META = '_certpsu_tutorlms_issued';
-
-	/**
 	 * Register the async handlers.
 	 *
 	 * @return void
@@ -78,7 +73,7 @@ final class Release_Sync_Handler {
 
 		$query = new \WP_Query(
 			array(
-				'post_type'      => 'tutor_course',
+				'post_type'      => 'courses',
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
@@ -138,13 +133,13 @@ final class Release_Sync_Handler {
 
 		foreach ( $user_ids as $uid ) {
 			$user_id = (int) $uid;
-			$state   = get_user_meta( $user_id, self::ISSUED_META, true );
+			$state   = ( new Learner_State_Repository() )->get( $user_id, $course_id );
 
-			if ( ! is_array( $state ) || empty( $state[ $course_id ] ) ) {
+			if ( empty( $state ) ) {
 				continue;
 			}
 
-			$course_state   = $state[ $course_id ];
+			$course_state   = $state;
 			$participant_id = (string) ( $course_state['participant_id'] ?? '' );
 			$cert_url       = (string) ( $course_state['certificate_url'] ?? '' );
 
@@ -173,6 +168,10 @@ final class Release_Sync_Handler {
 			return;
 		}
 
+		$state = ( new Learner_State_Repository() )->get( $user_id, $course_id );
+		if ( ( $state['class_id'] ?? '' ) !== $class_id || ( $state['participant_id'] ?? '' ) !== $participant_id ) {
+			return;
+		}
 		$client   = certpsu()->api();
 		$response = $client->get_participant_release( $class_id, $participant_id );
 
@@ -182,13 +181,12 @@ final class Release_Sync_Handler {
 
 		$cert_url = (string) ( $response->data['certificate_url'] ?? '' );
 		if ( '' !== $cert_url ) {
-			$state = get_user_meta( $user_id, self::ISSUED_META, true );
-
-			if ( is_array( $state ) && isset( $state[ $course_id ] ) ) {
-				$state[ $course_id ]['released']        = true;
-				$state[ $course_id ]['certificate_url'] = $cert_url;
-
-				update_user_meta( $user_id, self::ISSUED_META, $state );
+			$repository = new Learner_State_Repository();
+			$state = $repository->get( $user_id, $course_id );
+			if ( ( $state['class_id'] ?? '' ) === $class_id && ( $state['participant_id'] ?? '' ) === $participant_id ) {
+				if ( ! $repository->save( $user_id, $course_id, array( 'class_id' => $class_id, 'participant_id' => $participant_id, 'released' => true, 'certificate_url' => $cert_url ) ) ) {
+					throw new \RuntimeException( 'Could not persist the learner certificate URL.' );
+				}
 			}
 		}
 	}

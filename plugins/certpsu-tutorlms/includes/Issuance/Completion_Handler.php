@@ -35,11 +35,6 @@ final class Completion_Handler {
 	private const MAX_ATTEMPTS = 5;
 
 	/**
-	 * User meta key holding per-course issuance state.
-	 */
-	private const ISSUED_META = '_certpsu_tutorlms_issued';
-
-	/**
 	 * Constructor.
 	 *
 	 * @param Course_Class_Manager $classes Class manager.
@@ -188,8 +183,18 @@ final class Completion_Handler {
 	 * @return bool
 	 */
 	private function already_released( int $user_id, int $course_id ): bool {
-		$state = $this->issued_state( $user_id );
-		return ! empty( $state[ $course_id ]['released'] );
+		$state = ( new Learner_State_Repository() )->get( $user_id, $course_id );
+		if ( empty( $state ) ) {
+			$legacy = get_user_meta( $user_id, '_certpsu_tutorlms_issued', true );
+			$candidate = is_array( $legacy ) ? ( $legacy[ $course_id ] ?? array() ) : array();
+			$class_id = (string) get_post_meta( $course_id, Course_Class_Manager::CLASS_ID_META, true );
+			// A matching but unimportable legacy checkpoint has ambiguous site
+			// ownership. Absence from the display must not authorize remote replay.
+			if ( is_array( $candidate ) && '' !== $class_id && $class_id === (string) ( $candidate['class_id'] ?? '' ) ) {
+				throw new \RuntimeException( 'Legacy certificate ownership is ambiguous. Reconcile this site/course checkpoint before issuing again.' );
+			}
+		}
+		return ! empty( $state['released'] );
 	}
 
 	/**
@@ -204,26 +209,16 @@ final class Completion_Handler {
 	 * @return void
 	 */
 	private function remember( int $user_id, int $course_id, string $class_id, string $participant_id, bool $released, string $certificate_url = '' ): void {
-		$state               = $this->issued_state( $user_id );
-		$state[ $course_id ] = array(
+		$state = array(
 			'class_id'        => $class_id,
 			'participant_id'  => $participant_id,
 			'released'        => $released,
 			'certificate_url' => $certificate_url,
 			'at'              => gmdate( 'Y-m-d H:i:s' ),
 		);
-		update_user_meta( $user_id, self::ISSUED_META, $state );
-	}
-
-	/**
-	 * Read issuance state map for a user.
-	 *
-	 * @param int $user_id User ID.
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function issued_state( int $user_id ): array {
-		$state = get_user_meta( $user_id, self::ISSUED_META, true );
-		return is_array( $state ) ? $state : array();
+		if ( ! ( new Learner_State_Repository() )->save( $user_id, $course_id, $state ) ) {
+			throw new \RuntimeException( 'Could not save the learner certificate checkpoint; retry after repairing local persistence.' );
+		}
 	}
 
 	/**
